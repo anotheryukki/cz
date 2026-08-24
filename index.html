@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>$CZ</title>
+<meta name="description" content="$CZ — drawn in paint, backed by nothing." />
+<link rel="icon" type="image/jpeg" href="pfp.jpg" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=VT323&display=swap" rel="stylesheet" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  :root{
+    --ink:#0a0a0a;
+    --paper:#fbfbf3;
+    --yellow:#f3ba2f;
+    --yellow-deep:#c98f0a;
+    --pencil:#a9a89f;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'VT323', monospace;
+    cursor:crosshair;
+    overflow-x:hidden;
+  }
+
+  a, button{ cursor:pointer; }
+
+  .marker{ font-family:'Permanent Marker', cursive; }
+
+  /* ---------- background video layer ---------- */
+  .bg-video-wrap{
+    position:fixed;
+    inset:0;
+    z-index:-30;
+    overflow:hidden;
+  }
+  .bg-video-wrap video{
+    position:absolute;
+    top:50%; left:50%;
+    min-width:100%; min-height:100%;
+    width:auto; height:auto;
+    transform:translate(-50%,-50%);
+    object-fit:cover;
+    filter:saturate(0.85) contrast(1.05);
+  }
+  .bg-overlay{
+    position:fixed;
+    inset:0;
+    z-index:-20;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.35), rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.92) 100%),
+      linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.55) 100%);
+  }
+  .bg-grain{
+    position:fixed;
+    inset:0;
+    z-index:-10;
+    opacity:0.06;
+    mix-blend-mode:overlay;
+    pointer-events:none;
+  }
+
+  /* ---------- doodle hand-drawn box border (signature element) ---------- */
+  .doodle{
+    position:relative;
+  }
+  .doodle-svg{
+    position:absolute;
+    top:-10px;
+    left:-10px;
+    pointer-events:none;
+    overflow:visible;
+  }
+  .doodle-svg path{
+    fill:none;
+    stroke-width:3;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    stroke-dasharray:1000;
+    stroke-dashoffset:1000;
+    transition:stroke-dashoffset 1.1s cubic-bezier(.34,1.1,.4,1);
+  }
+  .in-view .doodle-svg path{ stroke-dashoffset:0; }
+
+  /* ---------- scroll unfold (reversible: folds shut again on scroll-up) ---------- */
+  .reveal{
+    opacity:0;
+    transform-origin:50% 0%;
+    transform:perspective(900px) rotateX(-62deg) translateY(-18px) rotate(var(--rot,0deg)) scale(0.96);
+    transition:opacity .65s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1);
+    will-change:transform, opacity;
+  }
+  .in-view.reveal{
+    opacity:1;
+    transform:perspective(900px) rotateX(0deg) translateY(0) rotate(var(--rot,0deg)) scale(1);
+  }
+
+  /* ---------- marquee ---------- */
+  .marquee-track{
+    display:flex;
+    width:max-content;
+    animation:marquee 18s linear infinite;
+  }
+  @keyframes marquee{
+    from{ transform:translateX(0); }
+    to{ transform:translateX(-50%); }
+  }
+
+  /* ---------- squiggle underline ---------- */
+  .squiggle{
+    display:block;
+    width:min(420px,70vw);
+    height:24px;
+    margin:0.25rem auto 0;
+  }
+
+  /* ---------- buttons ---------- */
+  .btn-doodle{
+    display:inline-block;
+    padding:0.85rem 2.2rem;
+    background:var(--yellow);
+    color:var(--ink);
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), background .2s ease;
+  }
+  .btn-doodle:hover{ transform:rotate(-1.5deg) scale(1.04); background:#ffcb4d; }
+  .btn-doodle:active{ transform:rotate(-1.5deg) scale(0.97); }
+  .btn-doodle:focus-visible{ outline:3px dashed var(--paper); outline-offset:4px; }
+
+  /* ---------- copy button ---------- */
+  .copy-btn{
+    transition:transform .2s cubic-bezier(.34,1.56,.64,1), background .2s ease;
+  }
+  .copy-btn:hover{ transform:scale(1.05); }
+  .copy-btn:focus-visible{ outline:3px dashed var(--ink); outline-offset:3px; }
+
+  /* header */
+  .site-header{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:40;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    .reveal, .doodle-svg path, .btn-doodle, .copy-btn{ transition:none !important; }
+    .reveal{ opacity:1; transform:none; }
+    .doodle-svg path{ stroke-dashoffset:0; }
+    .marquee-track{ animation:none; }
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <!-- fixed background video -->
+  <div class="bg-video-wrap">
+    <video autoplay muted loop playsinline id="bgvideo">
+      <source src="czcz.mp4" type="video/mp4" />
+    </video>
+  </div>
+  <div class="bg-overlay"></div>
+  <svg class="bg-grain" width="100%" height="100%">
+    <filter id="noiseFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"></feTurbulence>
+      <feColorMatrix type="saturate" values="0"></feColorMatrix>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noiseFilter)"></rect>
+  </svg>
+
+  <!-- reusable doodle rect symbol -->
+  <svg width="0" height="0" style="position:absolute">
+    <symbol id="doodleRect" viewBox="0 0 300 100" preserveAspectRatio="none">
+      <path fill="none" d="M9,7 L58,2 L131,8 L203,1 L293,9
+               L297,38 L300,68 L293,97
+               L228,91 L149,98 L77,92 L5,96
+               L1,58 L7,29 Z" />
+    </symbol>
+  </svg>
+
+  <!-- header -->
+  <header class="site-header flex items-center justify-between px-5 sm:px-8 py-4">
+    <span class="marker text-xl sm:text-2xl text-[var(--paper)]" style="text-shadow:2px 2px 0 var(--yellow);">$CZ</span>
+    <a href="#ca" class="btn-doodle marker text-sm sm:text-base rotate-[1deg]">BUY $CZ</a>
+  </header>
+
+  <main class="relative z-0">
+
+    <!-- HERO -->
+    <section class="min-h-screen flex flex-col items-center justify-center text-center px-6 relative">
+      <h1 class="marker text-[clamp(4.5rem,18vw,10rem)] leading-none text-[var(--paper)] rotate-[-2deg]"
+          style="text-shadow: 4px 4px 0 var(--yellow), 7px 7px 0 rgba(0,0,0,0.45);">
+        $CZ
+      </h1>
+
+      <svg class="squiggle" viewBox="0 0 400 24" fill="none" stroke="var(--yellow)" stroke-width="6" stroke-linecap="round">
+        <path d="M0,12 C25,2 25,22 50,12 C75,2 75,22 100,12 C125,2 125,22 150,12 C175,2 175,22 200,12 C225,2 225,22 250,12 C275,2 275,22 300,12 C325,2 325,22 350,12 C375,2 375,22 400,12" />
+      </svg>
+
+      <a href="#ca" class="btn-doodle marker text-xl sm:text-2xl mt-10 rotate-[-1deg]">
+        GET $CZ ▾
+      </a>
+    </section>
+
+    <!-- MARQUEE -->
+    <section class="bg-[var(--ink)]/90 border-y-4 border-[var(--yellow)] py-3 overflow-hidden -rotate-1 my-4">
+      <div class="marquee-track marker text-xl sm:text-3xl text-[var(--yellow)] gap-10 pr-10">
+        <span class="flex items-center gap-10 pr-10">
+          <span>$CZ</span><span>✦</span><span>DRAWN IN PAINT</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span>NOT FINANCIAL ADVICE</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span>TO THE MOON, PROBABLY</span><span>✦</span>
+        </span>
+        <span class="flex items-center gap-10 pr-10" aria-hidden="true">
+          <span>$CZ</span><span>✦</span><span>DRAWN IN PAINT</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span>NOT FINANCIAL ADVICE</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span>TO THE MOON, PROBABLY</span><span>✦</span>
+        </span>
+      </div>
+    </section>
+
+    <!-- GALLERY -->
+    <section class="px-6 py-24">
+      <p class="marker text-2xl sm:text-3xl text-center text-[var(--yellow)] reveal mb-12" style="--rot:-1deg;">GALLERY</p>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 max-w-5xl mx-auto">
+        <div class="doodle reveal" style="--rot:-1.5deg; transition-delay:0.02s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--ink)" fill="none"></use></svg>
+          <div class="doodle-content aspect-square overflow-hidden">
+            <img src="cz-gallery/photo_1_2026-08-24_17-12-32.jpg" alt="" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+        </div>
+        <div class="doodle reveal" style="--rot:1deg; transition-delay:0.08s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
+          <div class="doodle-content aspect-square overflow-hidden">
+            <img src="cz-gallery/photo_2_2026-08-24_17-12-32.jpg" alt="" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+        </div>
+        <div class="doodle reveal" style="--rot:-0.8deg; transition-delay:0.14s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
+          <div class="doodle-content aspect-square overflow-hidden">
+            <img src="cz-gallery/photo_3_2026-08-24_17-12-32.jpg" alt="" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+        </div>
+        <div class="doodle reveal" style="--rot:1.6deg; transition-delay:0.2s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--ink)" fill="none"></use></svg>
+          <div class="doodle-content aspect-square overflow-hidden">
+            <img src="cz-gallery/photo_4_2026-08-24_17-12-32.jpg" alt="" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+        </div>
+        <div class="doodle reveal" style="--rot:-1.2deg; transition-delay:0.26s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
+          <div class="doodle-content aspect-square overflow-hidden">
+            <img src="cz-gallery/photo_5_2026-08-24_17-12-32.jpg" alt="" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+        </div>
+        <div class="doodle reveal" style="--rot:0.9deg; transition-delay:0.32s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
+          <div class="doodle-content aspect-square overflow-hidden">
+            <img src="cz-gallery/photo_6_2026-08-24_17-12-32.jpg" alt="" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+        </div>
+        <div class="doodle reveal" style="--rot:-1.6deg; transition-delay:0.38s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--ink)" fill="none"></use></svg>
+          <div class="doodle-content aspect-square overflow-hidden">
+            <img src="cz-gallery/photo_7_2026-08-24_17-12-32.jpg" alt="" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+        </div>
+        <div class="doodle reveal" style="--rot:1.3deg; transition-delay:0.44s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
+          <div class="doodle-content aspect-square overflow-hidden">
+            <img src="cz-gallery/photo_8_2026-08-24_17-12-32.jpg" alt="" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+        </div>
+        <div class="doodle reveal" style="--rot:-0.9deg; transition-delay:0.5s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
+          <div class="doodle-content aspect-square overflow-hidden">
+            <img src="cz-gallery/photo_9_2026-08-24_17-12-32.jpg" alt="" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+        </div>
+        <div class="doodle reveal" style="--rot:1.1deg; transition-delay:0.56s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--ink)" fill="none"></use></svg>
+          <div class="doodle-content aspect-square overflow-hidden">
+            <img src="cz-gallery/photo_10_2026-08-24_17-12-32.jpg" alt="" loading="lazy" class="w-full h-full object-cover" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CA -->
+    <section id="ca" class="flex flex-col items-center justify-center px-6 py-24">
+      <p class="marker text-2xl sm:text-3xl text-[var(--yellow)] reveal" style="--rot:-1deg;">CONTRACT ADDRESS</p>
+
+      <div class="reveal doodle relative mt-6" style="--rot:0.5deg; width:min(520px,90vw);">
+        <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
+        <div class="doodle-content bg-black/60 backdrop-blur-sm px-6 py-8 flex flex-col items-center gap-4">
+          <p id="ca-text" class="text-xl sm:text-2xl text-[var(--paper)]/70 tracking-wide select-all">coming soon 👀</p>
+          <button id="copy-ca" class="copy-btn marker text-base bg-[var(--yellow)] text-[var(--ink)] px-5 py-2 rotate-[-1deg]">
+            COPY
+          </button>
+        </div>
+      </div>
+      <p class="text-sm text-[var(--pencil)] mt-4 reveal" style="--rot:0deg;">we'll scribble it here at launch.</p>
+    </section>
+
+  </main>
+
+  <!-- DISCLAIMER FOOTER -->
+  <footer class="relative z-0 px-6 py-14 flex justify-center">
+    <div class="reveal doodle relative" style="--rot:-0.5deg; width:min(640px,92vw);">
+      <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
+      <div class="doodle-content px-8 py-10 sm:px-10 sm:py-10 text-center">
+        <p class="text-sm sm:text-base leading-loose text-[var(--paper)]/60">
+          $CZ is a fan-made meme coin with no intrinsic value, roadmap, or promise of profit.
+          Not affiliated with Binance or any exchange. Not financial advice. DYOR.
+          <br />Art made with a shaky mouse.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // size doodle borders to exactly match their content box
+    function sizeDoodles() {
+      document.querySelectorAll('.doodle').forEach((box) => {
+        const svg = box.querySelector('.doodle-svg');
+        const content = box.querySelector('.doodle-content');
+        if (!svg || !content) return;
+        svg.style.width = content.offsetWidth + 20 + 'px';
+        svg.style.height = content.offsetHeight + 20 + 'px';
+      });
+    }
+    sizeDoodles();
+    window.addEventListener('load', sizeDoodles);
+    window.addEventListener('resize', sizeDoodles);
+    document.querySelectorAll('.doodle img').forEach((img) => {
+      if (img.complete) return;
+      img.addEventListener('load', sizeDoodles);
+    });
+
+    // scroll unfold — reversible: scrolling back up folds it shut again
+    const revealEls = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        entry.target.classList.toggle('in-view', entry.isIntersecting);
+      });
+    }, { threshold: 0.2, rootMargin: '0px 0px -8% 0px' });
+    revealEls.forEach((el) => io.observe(el));
+
+    // copy CA
+    const copyBtn = document.getElementById('copy-ca');
+    const caText = document.getElementById('ca-text');
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(caText.textContent.trim());
+        const original = copyBtn.textContent;
+        copyBtn.textContent = 'COPIED!';
+        setTimeout(() => { copyBtn.textContent = original; }, 1400);
+      } catch (e) {
+        copyBtn.textContent = 'OOPS';
+        setTimeout(() => { copyBtn.textContent = 'COPY'; }, 1400);
+      }
+    });
+
+    // ensure video autoplays
+    const vid = document.getElementById('bgvideo');
+    vid.play().catch(() => {});
+  </script>
+</body>
+</html>
