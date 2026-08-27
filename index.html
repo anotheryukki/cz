@@ -190,7 +190,17 @@
   <!-- header -->
   <header class="site-header flex items-center justify-between px-5 sm:px-8 py-4">
     <span class="marker text-xl sm:text-2xl text-[var(--paper)]" style="text-shadow:2px 2px 0 var(--yellow);">$CZ</span>
-    <a href="#ca" class="btn-doodle marker text-sm sm:text-base rotate-[1deg]">BUY $CZ</a>
+    <div class="flex items-center gap-4 sm:gap-6">
+      <nav class="flex items-center gap-3 sm:gap-4">
+        <a href="https://x.com/cz_bnb_cz" target="_blank" rel="noopener" aria-label="X (Twitter)"
+           class="text-[var(--paper)] hover:text-[var(--yellow)] transition-colors">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M18.244 2H21.5l-7.5 8.57L22.75 22h-6.94l-5.43-6.9L3.9 22H.64l8.03-9.17L1.25 2h7.12l4.91 6.3L18.24 2Zm-1.22 18h1.92L7.06 4h-2l12 16Z"/>
+          </svg>
+        </a>
+      </nav>
+      <a href="#ca" class="btn-doodle marker text-sm sm:text-base rotate-[1deg]">BUY $CZ</a>
+    </div>
   </header>
 
   <main class="relative z-0">
@@ -302,13 +312,12 @@
       <div class="reveal doodle relative mt-6" style="--rot:0.5deg; width:min(520px,90vw);">
         <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
         <div class="doodle-content bg-black/60 backdrop-blur-sm px-6 py-8 flex flex-col items-center gap-4">
-          <p id="ca-text" class="text-xl sm:text-2xl text-[var(--paper)]/70 tracking-wide select-all">coming soon 👀</p>
+          <p id="ca-text" class="text-xl sm:text-2xl text-[var(--paper)]/70 tracking-wide select-all">0x06c52f3c784b9a1b9bb0c615a41c35cac745ffff</p>
           <button id="copy-ca" class="copy-btn marker text-base bg-[var(--yellow)] text-[var(--ink)] px-5 py-2 rotate-[-1deg]">
             COPY
           </button>
         </div>
       </div>
-      <p class="text-sm text-[var(--pencil)] mt-4 reveal" style="--rot:0deg;">we'll scribble it here at launch.</p>
     </section>
 
   </main>
