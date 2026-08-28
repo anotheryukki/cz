@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>$CZ — Dividend Tracker</title>
+<meta name="description" content="Live dividend tracker for $CZ — every buy/sell tax, pulled straight from the verified BNB Smart Chain contract." />
+<link rel="icon" type="image/jpeg" href="pfp.jpg" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=VT323&display=swap" rel="stylesheet" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  :root{
+    --ink:#0a0a0a;
+    --paper:#fbfbf3;
+    --yellow:#f3ba2f;
+    --yellow-deep:#c98f0a;
+    --pencil:#a9a89f;
+    --sap:#7a9a4a;
+    --rust:#c1443c;
+    --plum:#8a6fb0;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'VT323', monospace;
+    cursor:crosshair;
+    overflow-x:hidden;
+  }
+
+  a, button{ cursor:pointer; }
+  .marker{ font-family:'Permanent Marker', cursive; }
+
+  .bg-video-wrap{ position:fixed; inset:0; z-index:-30; overflow:hidden; }
+  .bg-video-wrap video{
+    position:absolute; top:50%; left:50%;
+    min-width:100%; min-height:100%; width:auto; height:auto;
+    transform:translate(-50%,-50%);
+    object-fit:cover;
+    filter:saturate(0.85) contrast(1.05);
+  }
+  .bg-overlay{
+    position:fixed; inset:0; z-index:-20;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.45), rgba(0,0,0,0.8) 60%, rgba(0,0,0,0.94) 100%),
+      linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.6) 100%);
+  }
+  .bg-grain{ position:fixed; inset:0; z-index:-10; opacity:0.06; mix-blend-mode:overlay; pointer-events:none; }
+
+  .doodle{ position:relative; }
+  .doodle-svg{ position:absolute; top:-10px; left:-10px; pointer-events:none; overflow:visible; }
+  .doodle-svg path{
+    fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
+    stroke-dasharray:1000; stroke-dashoffset:1000;
+    transition:stroke-dashoffset 1.1s cubic-bezier(.34,1.1,.4,1);
+  }
+  .in-view .doodle-svg path{ stroke-dashoffset:0; }
+
+  .reveal{
+    opacity:0;
+    transform-origin:50% 0%;
+    transform:perspective(900px) rotateX(-62deg) translateY(-18px) rotate(var(--rot,0deg)) scale(0.96);
+    transition:opacity .65s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1);
+    will-change:transform, opacity;
+  }
+  .in-view.reveal{
+    opacity:1;
+    transform:perspective(900px) rotateX(0deg) translateY(0) rotate(var(--rot,0deg)) scale(1);
+  }
+
+  .squiggle{ display:block; width:min(420px,70vw); height:24px; margin:0.25rem auto 0; }
+
+  .btn-doodle{
+    display:inline-block; padding:0.85rem 2.2rem;
+    background:var(--yellow); color:var(--ink);
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), background .2s ease;
+  }
+  .btn-doodle:hover{ transform:rotate(-1.5deg) scale(1.04); background:#ffcb4d; }
+  .btn-doodle:active{ transform:rotate(-1.5deg) scale(0.97); }
+  .btn-doodle:focus-visible{ outline:3px dashed var(--paper); outline-offset:4px; }
+
+  .copy-btn{ transition:transform .2s cubic-bezier(.34,1.56,.64,1), background .2s ease; }
+  .copy-btn:hover{ transform:scale(1.05); }
+  .copy-btn:focus-visible{ outline:3px dashed var(--ink); outline-offset:3px; }
+
+  .nav-link{ transition:color .2s ease, transform .2s ease; }
+  .nav-link:hover{ color:var(--yellow); transform:translateY(-1px); }
+  .nav-link:focus-visible{ outline:2px dashed var(--paper); outline-offset:4px; }
+
+  .site-header{ position:fixed; top:0; left:0; right:0; z-index:40; }
+
+  .pulse-dot{ position:relative; width:10px; height:10px; border-radius:50%; background:var(--sap); }
+  .pulse-dot::after{
+    content:''; position:absolute; inset:0; border-radius:50%; background:var(--sap);
+    animation:pulse-ring 1.8s cubic-bezier(.22,1,.36,1) infinite;
+  }
+  @keyframes pulse-ring{ 0%{ transform:scale(1); opacity:.7; } 100%{ transform:scale(2.6); opacity:0; } }
+
+  .stat-num{ font-variant-numeric:tabular-nums; }
+  .addr-box{ word-break:break-all; }
+
+  /* ---------- tax allocation ring ---------- */
+  .tax-ring{
+    width:170px; height:170px; border-radius:50%;
+    position:relative; flex-shrink:0;
+  }
+  .tax-ring::after{
+    content:''; position:absolute; inset:20px; border-radius:50%;
+    background:rgba(10,10,10,0.92);
+  }
+  .tax-ring-label{
+    position:absolute; inset:20px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; text-align:center; z-index:1;
+  }
+
+  .legend-dot{ width:12px; height:12px; border-radius:50%; display:inline-block; flex-shrink:0; }
+
+  /* ---------- input ---------- */
+  .input-doodle{
+    background:rgba(0,0,0,0.5);
+    border:2px solid var(--pencil);
+    color:var(--paper);
+    font-family:'VT323', monospace;
+    transition:border-color .2s ease;
+  }
+  .input-doodle:focus{ outline:none; border-color:var(--yellow); }
+  .input-doodle::placeholder{ color:var(--pencil); }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    .reveal, .doodle-svg path, .btn-doodle, .copy-btn, .nav-link{ transition:none !important; }
+    .reveal{ opacity:1; transform:none; }
+    .doodle-svg path{ stroke-dashoffset:0; }
+    .pulse-dot::after{ animation:none; opacity:0; }
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <div class="bg-video-wrap">
+    <video autoplay muted loop playsinline id="bgvideo">
+      <source src="czcz.mp4" type="video/mp4" />
+    </video>
+  </div>
+  <div class="bg-overlay"></div>
+  <svg class="bg-grain" width="100%" height="100%">
+    <filter id="noiseFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"></feTurbulence>
+      <feColorMatrix type="saturate" values="0"></feColorMatrix>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noiseFilter)"></rect>
+  </svg>
+
+  <svg width="0" height="0" style="position:absolute">
+    <symbol id="doodleRect" viewBox="0 0 300 100" preserveAspectRatio="none">
+      <path fill="none" d="M9,7 L58,2 L131,8 L203,1 L293,9
+               L297,38 L300,68 L293,97
+               L228,91 L149,98 L77,92 L5,96
+               L1,58 L7,29 Z" />
+    </symbol>
+  </svg>
+
+  <!-- header -->
+  <header class="site-header flex items-center justify-between px-5 sm:px-8 py-4">
+    <a href="index.html" class="marker text-xl sm:text-2xl text-[var(--paper)] nav-link" style="text-shadow:2px 2px 0 var(--yellow);">$CZ</a>
+    <div class="flex items-center gap-4 sm:gap-6">
+      <nav class="flex items-center gap-4 sm:gap-6">
+        <a href="index.html" class="marker text-sm sm:text-base text-[var(--paper)] nav-link">HOME</a>
+        <a href="https://x.com/cz_bnb_cz" target="_blank" rel="noopener" aria-label="X (Twitter)"
+           class="text-[var(--paper)] hover:text-[var(--yellow)] transition-colors">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M18.244 2H21.5l-7.5 8.57L22.75 22h-6.94l-5.43-6.9L3.9 22H.64l8.03-9.17L1.25 2h7.12l4.91 6.3L18.24 2Zm-1.22 18h1.92L7.06 4h-2l12 16Z"/>
+          </svg>
+        </a>
+      </nav>
+      <a href="index.html#ca" class="btn-doodle marker text-sm sm:text-base rotate-[1deg]">BUY $CZ</a>
+    </div>
+  </header>
+
+  <main class="relative z-0">
+
+    <!-- HERO -->
+    <section class="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 pt-28 pb-10">
+      <h1 class="marker text-[clamp(2.4rem,8vw,4.8rem)] leading-none text-[var(--paper)] rotate-[-1.5deg]"
+          style="text-shadow: 4px 4px 0 var(--yellow), 7px 7px 0 rgba(0,0,0,0.45);">
+        DIVIDEND TRACKER
+      </h1>
+      <svg class="squiggle" viewBox="0 0 400 24" fill="none" stroke="var(--yellow)" stroke-width="6" stroke-linecap="round">
+        <path d="M0,12 C25,2 25,22 50,12 C75,2 75,22 100,12 C125,2 125,22 150,12 C175,2 175,22 200,12 C225,2 225,22 250,12 C275,2 275,22 300,12 C325,2 325,22 350,12 C375,2 375,22 400,12" />
+      </svg>
+      <p class="max-w-xl mx-auto mt-6 text-lg sm:text-xl leading-relaxed text-[var(--paper)]/75">
+        Every $CZ buy and sell carries a small tax, and it flows straight back to holders in BNB —
+        no wallet, no middleman, all handled by the contract itself. Hold at least
+        <span class="text-[var(--yellow)]" id="hero-minshare">10,000</span> $CZ and you're in the pool.
+      </p>
+      <p class="text-sm text-[var(--pencil)] mt-3">every number below is read live from the contract on BNB Smart Chain</p>
+    </section>
+
+    <!-- CONTRACT CARD -->
+    <section class="px-6 pb-10 flex justify-center">
+      <div class="doodle reveal" style="--rot:-0.6deg; width:min(680px,92vw);">
+        <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
+        <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 sm:px-8 sm:py-8 flex flex-col items-center gap-4 text-center">
+          <p class="marker text-base sm:text-lg text-[var(--yellow)] rotate-[-1deg]">$CZ TOKEN CONTRACT</p>
+          <p id="ca-addr" class="addr-box text-lg sm:text-xl tracking-wide text-[var(--paper)]/85 select-all">0x06c52f3c784b9a1b9bb0c615a41c35cac745ffff</p>
+          <p id="token-name" class="text-sm text-[var(--pencil)]"></p>
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <button id="copy-addr" class="copy-btn marker text-sm bg-[var(--yellow)] text-[var(--ink)] px-4 py-2 rotate-[-1deg]">COPY ADDRESS</button>
+            <a href="https://bscscan.com/token/0x06c52f3c784b9a1b9bb0c615a41c35cac745ffff" target="_blank" rel="noopener"
+               class="copy-btn marker text-sm border border-[var(--paper)]/40 text-[var(--paper)] px-4 py-2 rotate-[1deg]">VIEW ON BSCSCAN ↗</a>
+          </div>
+          <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[var(--pencil)] mt-2">
+            <span id="stat-supply">supply: —</span>
+            <span id="stat-holders">holders: —</span>
+            <span id="stat-owner">ownership: —</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAX & ALLOCATION -->
+    <section class="px-6 pb-10 flex justify-center">
+      <div class="doodle reveal" style="--rot:0.5deg; width:min(680px,92vw);">
+        <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
+        <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 sm:px-8">
+          <p class="marker text-lg sm:text-xl text-[var(--yellow)] rotate-[-1deg] mb-5">TAX &amp; ALLOCATION</p>
+
+          <div class="flex flex-wrap items-center justify-center gap-6 sm:gap-10 mb-6">
+            <div class="flex flex-col items-center">
+              <p class="text-sm text-[var(--pencil)] tracking-wide">BUY TAX</p>
+              <p id="stat-buytax" class="stat-num text-4xl text-[var(--paper)]">—%</p>
+            </div>
+            <div class="flex flex-col items-center">
+              <p class="text-sm text-[var(--pencil)] tracking-wide">SELL TAX</p>
+              <p id="stat-selltax" class="stat-num text-4xl text-[var(--paper)]">—%</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-center gap-8">
+            <div id="tax-ring" class="tax-ring" style="background:conic-gradient(var(--pencil) 0deg 360deg);">
+              <div class="tax-ring-label">
+                <span id="ring-pct" class="marker text-2xl text-[var(--yellow)]">—%</span>
+                <span class="text-xs text-[var(--pencil)]">to holders</span>
+              </div>
+            </div>
+            <ul id="allocation-legend" class="flex flex-col gap-2 text-base sm:text-lg">
+              <li class="text-[var(--pencil)]">loading allocation…</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="px-6 pb-10">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mx-auto">
+
+        <div class="doodle reveal" style="--rot:1deg; transition-delay:0.02s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--ink)" fill="none"></use></svg>
+          <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
+            <div class="flex items-center gap-2">
+              <span class="pulse-dot"></span>
+              <p class="marker text-sm text-[var(--pencil)] tracking-wide">TOTAL DISTRIBUTED</p>
+            </div>
+            <p id="stat-dispatched" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— BNB</p>
+            <p id="stat-dispatched-usd" class="text-sm text-[var(--pencil)]">≈ $—</p>
+          </div>
+        </div>
+
+        <div class="doodle reveal" style="--rot:-0.8deg; transition-delay:0.1s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
+          <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
+            <p class="marker text-sm text-[var(--pencil)] tracking-wide">CLAIMED BY HOLDERS</p>
+            <p id="stat-claimed" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— BNB</p>
+            <p id="stat-unclaimed" class="text-sm text-[var(--pencil)]">— BNB still unclaimed</p>
+          </div>
+        </div>
+
+        <div class="doodle reveal" style="--rot:1.2deg; transition-delay:0.18s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
+          <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
+            <p class="marker text-sm text-[var(--pencil)] tracking-wide">MIN HOLD FOR DIVIDENDS</p>
+            <p id="stat-minshare" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— $CZ</p>
+            <p id="stat-supplyshare" class="text-sm text-[var(--pencil)]">—% of supply earning</p>
+          </div>
+        </div>
+
+        <div class="doodle reveal" style="--rot:-0.4deg; transition-delay:0.42s;">
+          <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
+          <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
+            <p class="marker text-sm text-[var(--pencil)] tracking-wide">AUTO-SWAP THRESHOLD</p>
+            <p id="stat-mindispatch" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— $CZ</p>
+            <p class="text-sm text-[var(--pencil)]">tax tokens collected before auto-swap to BNB</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CHECK YOUR DIVIDEND -->
+    <section class="px-6 pb-10 flex justify-center">
+      <div class="doodle reveal" style="--rot:-0.3deg; width:min(680px,92vw);">
+        <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
+        <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 sm:px-8">
+          <p class="marker text-lg sm:text-xl text-[var(--yellow)] rotate-[-1deg] mb-4">CHECK YOUR DIVIDEND</p>
+          <p class="text-base text-[var(--paper)]/70 mb-4">Paste any wallet address to read its live dividend status straight from the contract. Nothing is signed or connected — this only reads public data.</p>
+
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input id="check-addr" type="text" placeholder="0x..." class="input-doodle flex-1 px-4 py-3 text-lg" />
+            <button id="check-btn" class="btn-doodle marker text-base rotate-[-1deg]">CHECK</button>
+          </div>
+          <p id="check-error" class="text-sm text-[var(--rust)] mt-2 hidden">that doesn't look like a wallet address.</p>
+
+          <div id="check-results" class="grid grid-cols-2 gap-4 mt-6 hidden">
+            <div class="flex flex-col items-center text-center">
+              <p class="text-sm text-[var(--pencil)]">ELIGIBLE</p>
+              <p id="res-eligible" class="stat-num text-xl text-[var(--paper)]">—</p>
+            </div>
+            <div class="flex flex-col items-center text-center">
+              <p class="text-sm text-[var(--pencil)]">YOU'VE RECEIVED</p>
+              <p id="res-claimed" class="stat-num text-xl text-[var(--paper)]">—</p>
+            </div>
+          </div>
+          <a id="claim-link" href="#" target="_blank" rel="noopener"
+             class="copy-btn marker text-sm border border-[var(--paper)]/40 text-[var(--paper)] px-4 py-2 rotate-[1deg] inline-block mt-5 hidden">
+            CLAIM ON BSCSCAN ↗
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- DISCLAIMER FOOTER -->
+  <footer class="relative z-0 px-6 py-14 flex justify-center">
+    <div class="reveal doodle relative" style="--rot:-0.5deg; width:min(640px,92vw);">
+      <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
+      <div class="doodle-content px-8 py-10 sm:px-10 sm:py-10 text-center">
+        <p class="text-sm sm:text-base leading-loose text-[var(--paper)]/60">
+          Every number on this page is read live from the $CZ contract and BNB Smart Chain over public RPC —
+          nobody's hand-entering these figures. Tax rates and allocation can be changed by the contract owner
+          at any time; ownership status is shown above. This tracker doesn't hold funds, sign transactions,
+          or control any wallet. For full history, check BscScan.
+          <br />Not affiliated with Binance or any exchange. Not financial advice. DYOR.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function sizeDoodles() {
+      document.querySelectorAll('.doodle').forEach((box) => {
+        const svg = box.querySelector('.doodle-svg');
+        const content = box.querySelector('.doodle-content');
+        if (!svg || !content) return;
+        svg.style.width = content.offsetWidth + 20 + 'px';
+        svg.style.height = content.offsetHeight + 20 + 'px';
+      });
+    }
+    sizeDoodles();
+    window.addEventListener('load', sizeDoodles);
+    window.addEventListener('resize', sizeDoodles);
+
+    const revealEls = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => entry.target.classList.toggle('in-view', entry.isIntersecting));
+    }, { threshold: 0.2, rootMargin: '0px 0px -8% 0px' });
+    revealEls.forEach((el) => io.observe(el));
+
+    const vid = document.getElementById('bgvideo');
+    vid.play().catch(() => {});
+
+    // copy CA
+    const copyBtn = document.getElementById('copy-addr');
+    const addrText = document.getElementById('ca-addr');
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(addrText.textContent.trim());
+        const original = copyBtn.textContent;
+        copyBtn.textContent = 'COPIED!';
+        setTimeout(() => { copyBtn.textContent = original; }, 1400);
+      } catch (e) {
+        copyBtn.textContent = 'OOPS';
+        setTimeout(() => { copyBtn.textContent = 'COPY ADDRESS'; }, 1400);
+      }
+    });
+
+    // ---------- contract reads ----------
+    const CONTRACT = '0x06c52f3c784b9a1b9bb0c615a41c35cac745ffff';
+    const RPC_ENDPOINTS = [
+      'https://bsc-dataseed.binance.org/',
+      'https://bsc-dataseed1.defibit.io/',
+      'https://bsc-dataseed1.ninicoin.io/',
+    ];
+
+    const SEL = {
+      feeRateBuy: '0x509e0ec1',
+      feeRateSell: '0x34fb976a',
+      feeHolder: '0xcc6be5e4',
+      feeDispatched: '0xd44f38ab',
+      feeClaimed: '0x71f4b8e8',
+      totalShares: '0x3a98ef39',
+      minShare: '0x8bb28de2',
+      minDispatch: '0x110395bd',
+      rateHolder: '0x6234b84f',
+      rateBurn: '0x18a4acea',
+      rateFounder: '0x6f0e5053',
+      rateLiquidity: '0xeda528d4',
+      rateBinanceCharity: '0xa3b620ed',
+      rateGiggleCharity: '0x3ce0f146',
+      decimals: '0x313ce567',
+      totalSupply: '0x18160ddd',
+      name: '0x06fdde03',
+      owner: '0x8da5cb5b',
+      userCount: '0x07973ccf',
+      userInfo: '0x1959a002',
+      balanceOf: '0x70a08231',
+    };
+
+    async function rpcCall(data) {
+      let lastErr;
+      for (const url of RPC_ENDPOINTS) {
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0', method: 'eth_call',
+              params: [{ to: CONTRACT, data }, 'latest'], id: 1,
+            }),
+          });
+          const json = await res.json();
+          if (json.result) return json.result;
+          if (json.error) lastErr = new Error(json.error.message || 'rpc error');
+        } catch (e) { lastErr = e; }
+      }
+      throw lastErr || new Error('all RPC endpoints failed');
+    }
+
+    function readUint(hex) { return Number(BigInt(hex)); }
+    function readAddress(hex) { return '0x' + hex.slice(-40); }
+    function readString(hex) {
+      const data = hex.slice(2);
+      const lenWord = data.slice(64, 128);
+      const len = parseInt(lenWord, 16);
+      const strHex = data.slice(128, 128 + len * 2);
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = parseInt(strHex.substr(i * 2, 2), 16);
+      return new TextDecoder('utf-8').decode(bytes);
+    }
+    function encodeAddr(addr) { return addr.toLowerCase().replace('0x', '').padStart(64, '0'); }
+
+    function fmtUnits(rawUint, decimals, displayDecimals) {
+      const n = rawUint / Math.pow(10, decimals);
+      return n.toLocaleString(undefined, { minimumFractionDigits: displayDecimals, maximumFractionDigits: displayDecimals });
+    }
+
+    let DECIMALS = 18;
+    let MIN_SHARE_TOKENS = 10000;
+
+    async function fetchBnbPrice() {
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT');
+        const json = await res.json();
+        return parseFloat(json.price);
+      } catch (e) { return null; }
+    }
+
+    async function loadContractData() {
+      const [
+        feeRateBuyHex, feeRateSellHex, feeHolderHex, feeDispatchedHex, feeClaimedHex,
+        totalSharesHex, minShareHex, minDispatchHex,
+        rateHolderHex, rateBurnHex, rateFounderHex, rateLiquidityHex, rateBinanceCharityHex, rateGiggleCharityHex,
+        decimalsHex, totalSupplyHex, nameHex, ownerHex, userCountHex,
+      ] = await Promise.all([
+        rpcCall(SEL.feeRateBuy), rpcCall(SEL.feeRateSell), rpcCall(SEL.feeHolder), rpcCall(SEL.feeDispatched), rpcCall(SEL.feeClaimed),
+        rpcCall(SEL.totalShares), rpcCall(SEL.minShare), rpcCall(SEL.minDispatch),
+        rpcCall(SEL.rateHolder), rpcCall(SEL.rateBurn), rpcCall(SEL.rateFounder), rpcCall(SEL.rateLiquidity), rpcCall(SEL.rateBinanceCharity), rpcCall(SEL.rateGiggleCharity),
+        rpcCall(SEL.decimals), rpcCall(SEL.totalSupply), rpcCall(SEL.name), rpcCall(SEL.owner), rpcCall(SEL.userCount),
+      ]);
+
+      DECIMALS = readUint(decimalsHex);
+      const decimals = DECIMALS;
+      const price = await fetchBnbPrice();
+
+      const feeDispatched = readUint(feeDispatchedHex) / 1e18;
+      const feeClaimed = readUint(feeClaimedHex) / 1e18;
+      const unclaimed = Math.max(0, feeDispatched - feeClaimed);
+      const minShare = readUint(minShareHex) / Math.pow(10, decimals);
+      const minDispatch = readUint(minDispatchHex) / Math.pow(10, decimals);
+      const totalSupply = readUint(totalSupplyHex) / Math.pow(10, decimals);
+      const totalShares = readUint(totalSharesHex) / Math.pow(10, decimals);
+      const owner = readAddress(ownerHex);
+      const name = readString(nameHex);
+      const userCount = readUint(userCountHex);
+
+      MIN_SHARE_TOKENS = minShare;
+
+      document.getElementById('hero-minshare').textContent = minShare.toLocaleString(undefined, { maximumFractionDigits: 0 });
+      document.getElementById('token-name').textContent = name ? `on-chain name: ${name}` : '';
+      document.getElementById('stat-supply').textContent = `supply: ${totalSupply.toLocaleString(undefined, { maximumFractionDigits: 0 })} $CZ`;
+      document.getElementById('stat-holders').textContent = `holders: ${userCount.toLocaleString()}`;
+      document.getElementById('stat-owner').textContent = owner === '0x0000000000000000000000000000000000000000'
+        ? 'ownership: renounced ✅' : 'ownership: active owner';
+
+      document.getElementById('stat-buytax').textContent = `${readUint(feeRateBuyHex)}%`;
+      document.getElementById('stat-selltax').textContent = `${readUint(feeRateSellHex)}%`;
+
+      // allocation ring + legend
+      const categories = [
+        { key: 'Divide To Holders', rate: readUint(rateHolderHex), color: 'var(--yellow)' },
+        { key: 'Burned', rate: readUint(rateBurnHex), color: 'var(--rust)' },
+        { key: 'Founder', rate: readUint(rateFounderHex), color: 'var(--sap)' },
+        { key: 'Liquidity', rate: readUint(rateLiquidityHex), color: 'var(--pencil)' },
+        { key: 'Binance Charity', rate: readUint(rateBinanceCharityHex), color: 'var(--yellow-deep)' },
+        { key: 'Giggle Charity', rate: readUint(rateGiggleCharityHex), color: 'var(--plum)' },
+      ];
+      let acc = 0;
+      const stops = [];
+      categories.forEach((c) => {
+        const start = acc;
+        acc += c.rate;
+        stops.push(`${c.color} ${start * 3.6}deg ${acc * 3.6}deg`);
+      });
+      if (acc < 100) stops.push(`rgba(169,168,159,0.25) ${acc * 3.6}deg 360deg`);
+      document.getElementById('tax-ring').style.background = `conic-gradient(${stops.join(',')})`;
+
+      const holderRate = categories[0].rate;
+      document.getElementById('ring-pct').textContent = `${holderRate}%`;
+
+      const legend = document.getElementById('allocation-legend');
+      legend.innerHTML = '';
+      categories.forEach((c) => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center gap-2' + (c.rate === 0 ? ' opacity-40' : '');
+        li.innerHTML = `<span class="legend-dot" style="background:${c.color}"></span> ${c.key}: <strong>${c.rate}%</strong>`;
+        legend.appendChild(li);
+      });
+
+      document.getElementById('stat-dispatched').textContent = `${feeDispatched.toLocaleString(undefined, { maximumFractionDigits: 4 })} BNB`;
+      document.getElementById('stat-dispatched-usd').textContent = price ? `≈ $${(feeDispatched * price).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '≈ $—';
+      document.getElementById('stat-claimed').textContent = `${feeClaimed.toLocaleString(undefined, { maximumFractionDigits: 4 })} BNB`;
+      document.getElementById('stat-unclaimed').textContent = `${unclaimed.toLocaleString(undefined, { maximumFractionDigits: 4 })} BNB still unclaimed`;
+      document.getElementById('stat-minshare').textContent = `${minShare.toLocaleString(undefined, { maximumFractionDigits: 0 })} $CZ`;
+      document.getElementById('stat-supplyshare').textContent = `${((totalShares / totalSupply) * 100).toFixed(1)}% of supply earning`;
+      document.getElementById('stat-mindispatch').textContent = `${minDispatch.toLocaleString(undefined, { maximumFractionDigits: 0 })} $CZ`;
+
+      sizeDoodles();
+    }
+
+    // ---------- check your dividend ----------
+    const checkInput = document.getElementById('check-addr');
+    const checkBtn = document.getElementById('check-btn');
+    const checkError = document.getElementById('check-error');
+    const checkResults = document.getElementById('check-results');
+    const claimLink = document.getElementById('claim-link');
+
+    async function checkAddress() {
+      const addr = checkInput.value.trim();
+      checkError.classList.add('hidden');
+      checkResults.classList.add('hidden');
+      claimLink.classList.add('hidden');
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) {
+        checkError.classList.remove('hidden');
+        sizeDoodles();
+        return;
+      }
+
+      const original = checkBtn.textContent;
+      checkBtn.textContent = 'CHECKING…';
+      try {
+        const [balanceHex, userInfoHex] = await Promise.all([
+          rpcCall(SEL.balanceOf + encodeAddr(addr)),
+          rpcCall(SEL.userInfo + encodeAddr(addr)),
+        ]);
+        const balance = readUint(balanceHex) / Math.pow(10, DECIMALS);
+        const words = userInfoHex.slice(2).match(/.{1,64}/g);
+        const claimed = readUint('0x' + words[3]) / 1e18;
+        const eligible = balance >= MIN_SHARE_TOKENS;
+
+        document.getElementById('res-eligible').textContent = eligible ? 'YES ✅' : 'NO';
+        document.getElementById('res-claimed').textContent = `${claimed.toLocaleString(undefined, { maximumFractionDigits: 4 })} BNB`;
+
+        claimLink.href = `https://bscscan.com/address/${CONTRACT}#writeContract`;
+        claimLink.classList.remove('hidden');
+        checkResults.classList.remove('hidden');
+      } catch (e) {
+        checkError.textContent = "couldn't read that address right now - try again in a moment.";
+        checkError.classList.remove('hidden');
+      }
+      checkBtn.textContent = original;
+      sizeDoodles();
+    }
+
+    checkBtn.addEventListener('click', checkAddress);
+    checkInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAddress(); });
+
+    loadContractData();
+    setInterval(loadContractData, 30000);
+  </script>
+</body>
+</html>
