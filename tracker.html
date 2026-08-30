@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>$CZ — Dividend Tracker</title>
-<meta name="description" content="Live dividend tracker for $CZ — every buy/sell tax, pulled straight from the verified BNB Smart Chain contract." />
+<meta name="description" content="Dividend tracker for $CZ — see how the buy/sell tax flows back to holders on BNB Smart Chain." />
 <link rel="icon" type="image/jpeg" href="pfp.jpg" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -175,7 +175,7 @@
     <div class="flex items-center gap-4 sm:gap-6">
       <nav class="flex items-center gap-4 sm:gap-6">
         <a href="index.html" class="marker text-sm sm:text-base text-[var(--paper)] nav-link">HOME</a>
-        <a href="https://x.com/cz_bnb_cz" target="_blank" rel="noopener" aria-label="X (Twitter)"
+        <a href="https://x.com/cz_on_bnb" target="_blank" rel="noopener" aria-label="X (Twitter)"
            class="text-[var(--paper)] hover:text-[var(--yellow)] transition-colors">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M18.244 2H21.5l-7.5 8.57L22.75 22h-6.94l-5.43-6.9L3.9 22H.64l8.03-9.17L1.25 2h7.12l4.91 6.3L18.24 2Zm-1.22 18h1.92L7.06 4h-2l12 16Z"/>
@@ -202,7 +202,7 @@
         no wallet, no middleman, all handled by the contract itself. Hold at least
         <span class="text-[var(--yellow)]" id="hero-minshare">10,000</span> $CZ and you're in the pool.
       </p>
-      <p class="text-sm text-[var(--pencil)] mt-3">every number below is read live from the contract on BNB Smart Chain</p>
+      <p class="text-sm text-[var(--pencil)] mt-3">the tracker's on pause for now — check back soon 👀</p>
     </section>
 
     <!-- CONTRACT CARD -->
@@ -211,17 +211,25 @@
         <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
         <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 sm:px-8 sm:py-8 flex flex-col items-center gap-4 text-center">
           <p class="marker text-base sm:text-lg text-[var(--yellow)] rotate-[-1deg]">$CZ TOKEN CONTRACT</p>
-          <p id="ca-addr" class="addr-box text-lg sm:text-xl tracking-wide text-[var(--paper)]/85 select-all">0x06c52f3c784b9a1b9bb0c615a41c35cac745ffff</p>
-          <p id="token-name" class="text-sm text-[var(--pencil)]"></p>
-          <div class="flex flex-wrap items-center justify-center gap-3">
-            <button id="copy-addr" class="copy-btn marker text-sm bg-[var(--yellow)] text-[var(--ink)] px-4 py-2 rotate-[-1deg]">COPY ADDRESS</button>
-            <a href="https://bscscan.com/token/0x06c52f3c784b9a1b9bb0c615a41c35cac745ffff" target="_blank" rel="noopener"
-               class="copy-btn marker text-sm border border-[var(--paper)]/40 text-[var(--paper)] px-4 py-2 rotate-[1deg]">VIEW ON BSCSCAN ↗</a>
+
+          <div id="ca-soon">
+            <p class="marker text-4xl sm:text-5xl text-[var(--paper)]">SOON</p>
+            <p class="text-sm text-[var(--pencil)]">contract address drops here at launch</p>
           </div>
-          <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[var(--pencil)] mt-2">
-            <span id="stat-supply">supply: —</span>
-            <span id="stat-holders">holders: —</span>
-            <span id="stat-owner">ownership: —</span>
+
+          <div id="ca-live" class="hidden flex-col items-center gap-4">
+            <p id="ca-addr" class="addr-box text-lg sm:text-xl tracking-wide text-[var(--paper)]/85 select-all"></p>
+            <p id="token-name" class="text-sm text-[var(--pencil)]"></p>
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <button id="copy-addr" class="copy-btn marker text-sm bg-[var(--yellow)] text-[var(--ink)] px-4 py-2 rotate-[-1deg]">COPY ADDRESS</button>
+              <a id="bscscan-link" href="#" target="_blank" rel="noopener"
+                 class="copy-btn marker text-sm border border-[var(--paper)]/40 text-[var(--paper)] px-4 py-2 rotate-[1deg]">VIEW ON BSCSCAN ↗</a>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[var(--pencil)] mt-2">
+              <span id="stat-supply">supply: —</span>
+              <span id="stat-holders">holders: —</span>
+              <span id="stat-owner">ownership: —</span>
+            </div>
           </div>
         </div>
       </div>
@@ -237,23 +245,23 @@
           <div class="flex flex-wrap items-center justify-center gap-6 sm:gap-10 mb-6">
             <div class="flex flex-col items-center">
               <p class="text-sm text-[var(--pencil)] tracking-wide">BUY TAX</p>
-              <p id="stat-buytax" class="stat-num text-4xl text-[var(--paper)]">—%</p>
+              <p id="stat-buytax" class="stat-num text-4xl text-[var(--paper)]">SOON</p>
             </div>
             <div class="flex flex-col items-center">
               <p class="text-sm text-[var(--pencil)] tracking-wide">SELL TAX</p>
-              <p id="stat-selltax" class="stat-num text-4xl text-[var(--paper)]">—%</p>
+              <p id="stat-selltax" class="stat-num text-4xl text-[var(--paper)]">SOON</p>
             </div>
           </div>
 
           <div class="flex flex-wrap items-center justify-center gap-8">
             <div id="tax-ring" class="tax-ring" style="background:conic-gradient(var(--pencil) 0deg 360deg);">
               <div class="tax-ring-label">
-                <span id="ring-pct" class="marker text-2xl text-[var(--yellow)]">—%</span>
+                <span id="ring-pct" class="marker text-xl text-[var(--yellow)]">SOON</span>
                 <span class="text-xs text-[var(--pencil)]">to holders</span>
               </div>
             </div>
             <ul id="allocation-legend" class="flex flex-col gap-2 text-base sm:text-lg">
-              <li class="text-[var(--pencil)]">loading allocation…</li>
+              <li class="text-[var(--pencil)]">allocation drops at launch</li>
             </ul>
           </div>
         </div>
@@ -267,12 +275,9 @@
         <div class="doodle reveal" style="--rot:1deg; transition-delay:0.02s;">
           <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--ink)" fill="none"></use></svg>
           <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
-            <div class="flex items-center gap-2">
-              <span class="pulse-dot"></span>
-              <p class="marker text-sm text-[var(--pencil)] tracking-wide">TOTAL DISTRIBUTED</p>
-            </div>
-            <p id="stat-dispatched" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— BNB</p>
-            <p id="stat-dispatched-usd" class="text-sm text-[var(--pencil)]">≈ $—</p>
+            <p class="marker text-sm text-[var(--pencil)] tracking-wide">TOTAL DISTRIBUTED</p>
+            <p id="stat-dispatched" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">SOON</p>
+            <p id="stat-dispatched-usd" class="text-sm text-[var(--pencil)]">&nbsp;</p>
           </div>
         </div>
 
@@ -280,8 +285,8 @@
           <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
           <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
             <p class="marker text-sm text-[var(--pencil)] tracking-wide">CLAIMED BY HOLDERS</p>
-            <p id="stat-claimed" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— BNB</p>
-            <p id="stat-unclaimed" class="text-sm text-[var(--pencil)]">— BNB still unclaimed</p>
+            <p id="stat-claimed" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">SOON</p>
+            <p id="stat-unclaimed" class="text-sm text-[var(--pencil)]">&nbsp;</p>
           </div>
         </div>
 
@@ -289,8 +294,8 @@
           <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
           <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
             <p class="marker text-sm text-[var(--pencil)] tracking-wide">MIN HOLD FOR DIVIDENDS</p>
-            <p id="stat-minshare" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— $CZ</p>
-            <p id="stat-supplyshare" class="text-sm text-[var(--pencil)]">—% of supply earning</p>
+            <p id="stat-minshare" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">SOON</p>
+            <p id="stat-supplyshare" class="text-sm text-[var(--pencil)]">&nbsp;</p>
           </div>
         </div>
 
@@ -298,7 +303,7 @@
           <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
           <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
             <p class="marker text-sm text-[var(--pencil)] tracking-wide">AUTO-SWAP THRESHOLD</p>
-            <p id="stat-mindispatch" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— $CZ</p>
+            <p id="stat-mindispatch" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">SOON</p>
             <p class="text-sm text-[var(--pencil)]">tax tokens collected before auto-swap to BNB</p>
           </div>
         </div>
@@ -346,10 +351,9 @@
       <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
       <div class="doodle-content px-8 py-10 sm:px-10 sm:py-10 text-center">
         <p class="text-sm sm:text-base leading-loose text-[var(--paper)]/60">
-          Every number on this page is read live from the $CZ contract and BNB Smart Chain over public RPC —
-          nobody's hand-entering these figures. Tax rates and allocation can be changed by the contract owner
-          at any time; ownership status is shown above. This tracker doesn't hold funds, sign transactions,
-          or control any wallet. For full history, check BscScan.
+          This tracker reads straight off the $CZ contract and BNB Smart Chain over public RPC — nobody hand-enters
+          these figures. It's paused for now, so nothing above is live yet. This tracker doesn't hold funds, sign
+          transactions, or control any wallet.
           <br />Not affiliated with Binance or any exchange. Not financial advice. DYOR.
         </p>
       </div>
@@ -395,7 +399,10 @@
     });
 
     // ---------- contract reads ----------
-    const CONTRACT = '0x06c52f3c784b9a1b9bb0c615a41c35cac745ffff';
+    // tracker is paused until the new contract is live — flip TRACKER_LIVE and set
+    // CONTRACT below to switch it back on. none of the reading logic has changed.
+    const TRACKER_LIVE = false;
+    const CONTRACT = '';
     const RPC_ENDPOINTS = [
       'https://bsc-dataseed.binance.org/',
       'https://bsc-dataseed1.defibit.io/',
@@ -476,6 +483,12 @@
     }
 
     async function loadContractData() {
+      document.getElementById('ca-soon').classList.add('hidden');
+      document.getElementById('ca-live').classList.remove('hidden');
+      document.getElementById('ca-live').classList.add('flex');
+      document.getElementById('ca-addr').textContent = CONTRACT;
+      document.getElementById('bscscan-link').href = `https://bscscan.com/token/${CONTRACT}`;
+
       const [
         feeRateBuyHex, feeRateSellHex, feeHolderHex, feeDispatchedHex, feeClaimedHex,
         totalSharesHex, minShareHex, minDispatchHex,
@@ -570,6 +583,13 @@
       checkResults.classList.add('hidden');
       claimLink.classList.add('hidden');
 
+      if (!TRACKER_LIVE) {
+        checkError.textContent = 'SOON — the tracker isn\'t live yet.';
+        checkError.classList.remove('hidden');
+        sizeDoodles();
+        return;
+      }
+
       if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) {
         checkError.classList.remove('hidden');
         sizeDoodles();
@@ -605,8 +625,10 @@
     checkBtn.addEventListener('click', checkAddress);
     checkInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAddress(); });
 
-    loadContractData();
-    setInterval(loadContractData, 30000);
+    if (TRACKER_LIVE) {
+      loadContractData();
+      setInterval(loadContractData, 30000);
+    }
   </script>
 </body>
 </html>
