@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>$CZ — Dividend Tracker</title>
-<meta name="description" content="Dividend tracker for $CZ — see how the buy/sell tax flows back to holders on BNB Smart Chain." />
+<meta name="description" content="Live dividend tracker for $CZ — every buy/sell tax, pulled straight from the verified BNB Smart Chain contract." />
 <link rel="icon" type="image/jpeg" href="pfp.jpg" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -202,7 +202,7 @@
         no wallet, no middleman, all handled by the contract itself. Hold at least
         <span class="text-[var(--yellow)]" id="hero-minshare">10,000</span> $CZ and you're in the pool.
       </p>
-      <p class="text-sm text-[var(--pencil)] mt-3">the tracker's on pause for now — check back soon 👀</p>
+      <p class="text-sm text-[var(--pencil)] mt-3">every number below is read live from the contract on BNB Smart Chain</p>
     </section>
 
     <!-- CONTRACT CARD -->
@@ -245,23 +245,23 @@
           <div class="flex flex-wrap items-center justify-center gap-6 sm:gap-10 mb-6">
             <div class="flex flex-col items-center">
               <p class="text-sm text-[var(--pencil)] tracking-wide">BUY TAX</p>
-              <p id="stat-buytax" class="stat-num text-4xl text-[var(--paper)]">SOON</p>
+              <p id="stat-buytax" class="stat-num text-4xl text-[var(--paper)]">—%</p>
             </div>
             <div class="flex flex-col items-center">
               <p class="text-sm text-[var(--pencil)] tracking-wide">SELL TAX</p>
-              <p id="stat-selltax" class="stat-num text-4xl text-[var(--paper)]">SOON</p>
+              <p id="stat-selltax" class="stat-num text-4xl text-[var(--paper)]">—%</p>
             </div>
           </div>
 
           <div class="flex flex-wrap items-center justify-center gap-8">
             <div id="tax-ring" class="tax-ring" style="background:conic-gradient(var(--pencil) 0deg 360deg);">
               <div class="tax-ring-label">
-                <span id="ring-pct" class="marker text-xl text-[var(--yellow)]">SOON</span>
+                <span id="ring-pct" class="marker text-2xl text-[var(--yellow)]">—%</span>
                 <span class="text-xs text-[var(--pencil)]">to holders</span>
               </div>
             </div>
             <ul id="allocation-legend" class="flex flex-col gap-2 text-base sm:text-lg">
-              <li class="text-[var(--pencil)]">allocation drops at launch</li>
+              <li class="text-[var(--pencil)]">loading allocation…</li>
             </ul>
           </div>
         </div>
@@ -275,9 +275,12 @@
         <div class="doodle reveal" style="--rot:1deg; transition-delay:0.02s;">
           <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--ink)" fill="none"></use></svg>
           <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
-            <p class="marker text-sm text-[var(--pencil)] tracking-wide">TOTAL DISTRIBUTED</p>
-            <p id="stat-dispatched" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">SOON</p>
-            <p id="stat-dispatched-usd" class="text-sm text-[var(--pencil)]">&nbsp;</p>
+            <div class="flex items-center gap-2">
+              <span class="pulse-dot"></span>
+              <p class="marker text-sm text-[var(--pencil)] tracking-wide">TOTAL DISTRIBUTED</p>
+            </div>
+            <p id="stat-dispatched" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— BNB</p>
+            <p id="stat-dispatched-usd" class="text-sm text-[var(--pencil)]">≈ $—</p>
           </div>
         </div>
 
@@ -285,8 +288,8 @@
           <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
           <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
             <p class="marker text-sm text-[var(--pencil)] tracking-wide">CLAIMED BY HOLDERS</p>
-            <p id="stat-claimed" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">SOON</p>
-            <p id="stat-unclaimed" class="text-sm text-[var(--pencil)]">&nbsp;</p>
+            <p id="stat-claimed" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— BNB</p>
+            <p id="stat-unclaimed" class="text-sm text-[var(--pencil)]">— BNB still unclaimed</p>
           </div>
         </div>
 
@@ -294,8 +297,8 @@
           <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
           <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
             <p class="marker text-sm text-[var(--pencil)] tracking-wide">MIN HOLD FOR DIVIDENDS</p>
-            <p id="stat-minshare" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">SOON</p>
-            <p id="stat-supplyshare" class="text-sm text-[var(--pencil)]">&nbsp;</p>
+            <p id="stat-minshare" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— $CZ</p>
+            <p id="stat-supplyshare" class="text-sm text-[var(--pencil)]">—% of supply earning</p>
           </div>
         </div>
 
@@ -303,7 +306,7 @@
           <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
           <div class="doodle-content bg-black/55 backdrop-blur-sm px-6 py-7 flex flex-col items-center gap-2 text-center">
             <p class="marker text-sm text-[var(--pencil)] tracking-wide">AUTO-SWAP THRESHOLD</p>
-            <p id="stat-mindispatch" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">SOON</p>
+            <p id="stat-mindispatch" class="stat-num text-3xl sm:text-4xl text-[var(--paper)] mt-1">— $CZ</p>
             <p class="text-sm text-[var(--pencil)]">tax tokens collected before auto-swap to BNB</p>
           </div>
         </div>
@@ -351,9 +354,10 @@
       <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
       <div class="doodle-content px-8 py-10 sm:px-10 sm:py-10 text-center">
         <p class="text-sm sm:text-base leading-loose text-[var(--paper)]/60">
-          This tracker reads straight off the $CZ contract and BNB Smart Chain over public RPC — nobody hand-enters
-          these figures. It's paused for now, so nothing above is live yet. This tracker doesn't hold funds, sign
-          transactions, or control any wallet.
+          Every number on this page is read live from the $CZ contract and BNB Smart Chain over public RPC —
+          nobody's hand-entering these figures. Tax rates and allocation can be changed by the contract owner
+          at any time; ownership status is shown above. This tracker doesn't hold funds, sign transactions,
+          or control any wallet. For full history, check BscScan.
           <br />Not affiliated with Binance or any exchange. Not financial advice. DYOR.
         </p>
       </div>
@@ -399,10 +403,8 @@
     });
 
     // ---------- contract reads ----------
-    // tracker is paused until the new contract is live — flip TRACKER_LIVE and set
-    // CONTRACT below to switch it back on. none of the reading logic has changed.
-    const TRACKER_LIVE = false;
-    const CONTRACT = '';
+    const TRACKER_LIVE = true;
+    const CONTRACT = '0x64df0c0e9a507faf943e6503d6c1d7e6e450ffff';
     const RPC_ENDPOINTS = [
       'https://bsc-dataseed.binance.org/',
       'https://bsc-dataseed1.defibit.io/',
