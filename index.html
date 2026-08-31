@@ -9,7 +9,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=VT323&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=VT323&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -37,6 +37,10 @@
   a, button{ cursor:pointer; }
 
   .marker{ font-family:'Permanent Marker', cursive; }
+
+  /* ---------- Chinese type pairing ---------- */
+  html[lang="zh"] body{ font-family:'Noto Sans SC', sans-serif; }
+  html[lang="zh"] .marker{ font-family:'Ma Shan Zheng', cursive; }
 
   /* ---------- background video layer ---------- */
   .bg-video-wrap{
@@ -192,7 +196,8 @@
     <span class="marker text-xl sm:text-2xl text-[var(--paper)]" style="text-shadow:2px 2px 0 var(--yellow);">$CZ</span>
     <div class="flex items-center gap-4 sm:gap-6">
       <nav class="flex items-center gap-4 sm:gap-5">
-        <a href="tracker.html" class="marker text-sm sm:text-base text-[var(--paper)] hover:text-[var(--yellow)] transition-colors">TRACKER</a>
+        <button id="lang-toggle" type="button" class="marker text-sm sm:text-base text-[var(--paper)] hover:text-[var(--yellow)] transition-colors" aria-label="Switch language">中文</button>
+        <a href="tracker.html" data-i18n="navTracker" class="marker text-sm sm:text-base text-[var(--paper)] hover:text-[var(--yellow)] transition-colors">TRACKER</a>
         <a href="https://x.com/cz_on_bnb" target="_blank" rel="noopener" aria-label="X (Twitter)"
            class="text-[var(--paper)] hover:text-[var(--yellow)] transition-colors">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -200,7 +205,7 @@
           </svg>
         </a>
       </nav>
-      <a href="#ca" class="btn-doodle marker text-sm sm:text-base rotate-[1deg]">BUY $CZ</a>
+      <a href="#ca" data-i18n="navBuy" class="btn-doodle marker text-sm sm:text-base rotate-[1deg]">BUY $CZ</a>
     </div>
   </header>
 
@@ -217,7 +222,7 @@
         <path d="M0,12 C25,2 25,22 50,12 C75,2 75,22 100,12 C125,2 125,22 150,12 C175,2 175,22 200,12 C225,2 225,22 250,12 C275,2 275,22 300,12 C325,2 325,22 350,12 C375,2 375,22 400,12" />
       </svg>
 
-      <a href="#ca" class="btn-doodle marker text-xl sm:text-2xl mt-10 rotate-[-1deg]">
+      <a href="#ca" data-i18n="heroGet" class="btn-doodle marker text-xl sm:text-2xl mt-10 rotate-[-1deg]">
         GET $CZ ▾
       </a>
     </section>
@@ -226,21 +231,21 @@
     <section class="bg-[var(--ink)]/90 border-y-4 border-[var(--yellow)] py-3 overflow-hidden -rotate-1 my-4">
       <div class="marquee-track marker text-xl sm:text-3xl text-[var(--yellow)] gap-10 pr-10">
         <span class="flex items-center gap-10 pr-10">
-          <span>$CZ</span><span>✦</span><span>DRAWN IN PAINT</span><span>✦</span>
-          <span>$CZ</span><span>✦</span><span>NOT FINANCIAL ADVICE</span><span>✦</span>
-          <span>$CZ</span><span>✦</span><span>TO THE MOON, PROBABLY</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span data-i18n="marqueePaint">DRAWN IN PAINT</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span data-i18n="marqueeNfa">NOT FINANCIAL ADVICE</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span data-i18n="marqueeMoon">TO THE MOON, PROBABLY</span><span>✦</span>
         </span>
         <span class="flex items-center gap-10 pr-10" aria-hidden="true">
-          <span>$CZ</span><span>✦</span><span>DRAWN IN PAINT</span><span>✦</span>
-          <span>$CZ</span><span>✦</span><span>NOT FINANCIAL ADVICE</span><span>✦</span>
-          <span>$CZ</span><span>✦</span><span>TO THE MOON, PROBABLY</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span data-i18n="marqueePaint">DRAWN IN PAINT</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span data-i18n="marqueeNfa">NOT FINANCIAL ADVICE</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span data-i18n="marqueeMoon">TO THE MOON, PROBABLY</span><span>✦</span>
         </span>
       </div>
     </section>
 
     <!-- GALLERY -->
     <section class="px-6 py-24">
-      <p class="marker text-2xl sm:text-3xl text-center text-[var(--yellow)] reveal mb-12" style="--rot:-1deg;">GALLERY</p>
+      <p class="marker text-2xl sm:text-3xl text-center text-[var(--yellow)] reveal mb-12" data-i18n="galleryHeading" style="--rot:-1deg;">GALLERY</p>
 
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 max-w-5xl mx-auto">
         <div class="doodle reveal" style="--rot:-1.5deg; transition-delay:0.02s;">
@@ -308,13 +313,13 @@
 
     <!-- CA -->
     <section id="ca" class="flex flex-col items-center justify-center px-6 py-24">
-      <p class="marker text-2xl sm:text-3xl text-[var(--yellow)] reveal" style="--rot:-1deg;">CONTRACT ADDRESS</p>
+      <p class="marker text-2xl sm:text-3xl text-[var(--yellow)] reveal" data-i18n="caHeading" style="--rot:-1deg;">CONTRACT ADDRESS</p>
 
       <div class="reveal doodle relative mt-6" style="--rot:0.5deg; width:min(520px,90vw);">
         <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
         <div class="doodle-content bg-black/60 backdrop-blur-sm px-6 py-8 flex flex-col items-center gap-4">
           <p id="ca-text" class="text-xl sm:text-2xl text-[var(--paper)]/70 tracking-wide select-all">0x64df0c0e9a507faf943e6503d6c1d7e6e450ffff</p>
-          <button id="copy-ca" class="copy-btn marker text-base bg-[var(--yellow)] text-[var(--ink)] px-5 py-2 rotate-[-1deg]">
+          <button id="copy-ca" data-i18n="copyBtn" class="copy-btn marker text-base bg-[var(--yellow)] text-[var(--ink)] px-5 py-2 rotate-[-1deg]">
             COPY
           </button>
         </div>
@@ -328,7 +333,7 @@
     <div class="reveal doodle relative" style="--rot:-0.5deg; width:min(640px,92vw);">
       <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--pencil)" fill="none"></use></svg>
       <div class="doodle-content px-8 py-10 sm:px-10 sm:py-10 text-center">
-        <p class="text-sm sm:text-base leading-loose text-[var(--paper)]/60">
+        <p class="text-sm sm:text-base leading-loose text-[var(--paper)]/60" data-i18n-html="footerDisclaimer">
           $CZ is a fan-made meme coin with no intrinsic value, roadmap, or promise of profit.
           Not affiliated with Binance or any exchange. Not financial advice. DYOR.
           <br />Art made with a shaky mouse.
@@ -372,17 +377,77 @@
       try {
         await navigator.clipboard.writeText(caText.textContent.trim());
         const original = copyBtn.textContent;
-        copyBtn.textContent = 'COPIED!';
+        copyBtn.textContent = I18N[getLang()].copied;
         setTimeout(() => { copyBtn.textContent = original; }, 1400);
       } catch (e) {
-        copyBtn.textContent = 'OOPS';
-        setTimeout(() => { copyBtn.textContent = 'COPY'; }, 1400);
+        copyBtn.textContent = I18N[getLang()].oops;
+        setTimeout(() => { copyBtn.textContent = I18N[getLang()].copyBtn; }, 1400);
       }
     });
 
     // ensure video autoplays
     const vid = document.getElementById('bgvideo');
     vid.play().catch(() => {});
+
+    // ---------- language toggle ----------
+    const LANG_KEY = 'cz-lang';
+    const I18N = {
+      en: {
+        navTracker: 'TRACKER',
+        navBuy: 'BUY $CZ',
+        heroGet: 'GET $CZ ▾',
+        marqueePaint: 'DRAWN IN PAINT',
+        marqueeNfa: 'NOT FINANCIAL ADVICE',
+        marqueeMoon: 'TO THE MOON, PROBABLY',
+        galleryHeading: 'GALLERY',
+        caHeading: 'CONTRACT ADDRESS',
+        copyBtn: 'COPY',
+        copied: 'COPIED!',
+        oops: 'OOPS',
+        footerDisclaimer: '$CZ is a fan-made meme coin with no intrinsic value, roadmap, or promise of profit. Not affiliated with Binance or any exchange. Not financial advice. DYOR.<br>Art made with a shaky mouse.',
+      },
+      zh: {
+        navTracker: '追踪器',
+        navBuy: '购买 $CZ',
+        heroGet: '获取 $CZ ▾',
+        marqueePaint: '手绘涂鸦',
+        marqueeNfa: '非财务建议',
+        marqueeMoon: '大概率要登月',
+        galleryHeading: '图库',
+        caHeading: '合约地址',
+        copyBtn: '复制',
+        copied: '已复制！',
+        oops: '出错了',
+        footerDisclaimer: '$CZ 是粉丝自制的模因币，没有内在价值、路线图，也不承诺任何收益。与币安或任何交易所均无关联。非财务建议，请自行研究（DYOR）。<br>由一只不太稳的手绘制而成。',
+      },
+    };
+
+    function getLang() {
+      return localStorage.getItem(LANG_KEY) === 'zh' ? 'zh' : 'en';
+    }
+
+    function applyLang(lang) {
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const key = el.getAttribute('data-i18n');
+        if (I18N[lang][key] !== undefined) el.textContent = I18N[lang][key];
+      });
+      document.querySelectorAll('[data-i18n-html]').forEach((el) => {
+        const key = el.getAttribute('data-i18n-html');
+        if (I18N[lang][key] !== undefined) el.innerHTML = I18N[lang][key];
+      });
+      const toggle = document.getElementById('lang-toggle');
+      if (toggle) toggle.textContent = lang === 'zh' ? 'EN' : '中文';
+      sizeDoodles();
+    }
+
+    document.getElementById('lang-toggle').addEventListener('click', () => {
+      const next = getLang() === 'zh' ? 'en' : 'zh';
+      localStorage.setItem(LANG_KEY, next);
+      applyLang(next);
+    });
+
+    applyLang(getLang());
   </script>
 </body>
 </html>
