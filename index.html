@@ -38,9 +38,18 @@
 
   .marker{ font-family:'Permanent Marker', cursive; }
 
-  /* ---------- Chinese type pairing ---------- */
-  html[lang="zh"] body{ font-family:'Noto Sans SC', sans-serif; }
-  html[lang="zh"] .marker{ font-family:'Ma Shan Zheng', cursive; }
+  /* ---------- Chinese type pairing ----------
+     scoped to translated text only — numbers, addresses, and tickers
+     stay in the original English fonts regardless of language */
+  html[lang="zh"] [data-i18n],
+  html[lang="zh"] [data-i18n-html],
+  html[lang="zh"] .i18n-frag{
+    font-family:'Noto Sans SC', sans-serif;
+  }
+  html[lang="zh"] [data-i18n].marker,
+  html[lang="zh"] [data-i18n-html].marker{
+    font-family:'Ma Shan Zheng', cursive;
+  }
 
   /* ---------- background video layer ---------- */
   .bg-video-wrap{
@@ -148,6 +157,22 @@
   .copy-btn:hover{ transform:scale(1.05); }
   .copy-btn:focus-visible{ outline:3px dashed var(--ink); outline-offset:3px; }
 
+  /* ---------- language toggle ---------- */
+  .lang-toggle{
+    display:inline-flex;
+    align-items:center;
+    padding:0.4rem 1rem;
+    border:2px solid var(--yellow);
+    border-radius:999px;
+    background:rgba(243,186,47,0.1);
+    color:var(--yellow);
+    box-shadow:0 2px 0 rgba(0,0,0,0.5), 0 4px 14px rgba(243,186,47,0.18);
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), background .2s ease, color .2s ease;
+  }
+  .lang-toggle:hover{ transform:rotate(-2deg) scale(1.06); background:rgba(243,186,47,0.22); }
+  .lang-toggle:active{ transform:rotate(-2deg) scale(0.95); }
+  .lang-toggle:focus-visible{ outline:3px dashed var(--paper); outline-offset:4px; }
+
   /* header */
   .site-header{
     position:fixed;
@@ -157,7 +182,7 @@
 
   @media (prefers-reduced-motion: reduce){
     html{ scroll-behavior:auto; }
-    .reveal, .doodle-svg path, .btn-doodle, .copy-btn{ transition:none !important; }
+    .reveal, .doodle-svg path, .btn-doodle, .copy-btn, .lang-toggle{ transition:none !important; }
     .reveal{ opacity:1; transform:none; }
     .doodle-svg path{ stroke-dashoffset:0; }
     .marquee-track{ animation:none; }
@@ -196,7 +221,7 @@
     <span class="marker text-xl sm:text-2xl text-[var(--paper)]" style="text-shadow:2px 2px 0 var(--yellow);">$CZ</span>
     <div class="flex items-center gap-4 sm:gap-6">
       <nav class="flex items-center gap-4 sm:gap-5">
-        <button id="lang-toggle" type="button" class="marker text-sm sm:text-base text-[var(--paper)] hover:text-[var(--yellow)] transition-colors" aria-label="Switch language">中文</button>
+        <button id="lang-toggle" type="button" class="lang-toggle marker text-sm sm:text-base rotate-[-1deg]" aria-label="Switch language">中文</button>
         <a href="tracker.html" data-i18n="navTracker" class="marker text-sm sm:text-base text-[var(--paper)] hover:text-[var(--yellow)] transition-colors">TRACKER</a>
         <a href="https://x.com/cz_on_bnb" target="_blank" rel="noopener" aria-label="X (Twitter)"
            class="text-[var(--paper)] hover:text-[var(--yellow)] transition-colors">
@@ -231,14 +256,14 @@
     <section class="bg-[var(--ink)]/90 border-y-4 border-[var(--yellow)] py-3 overflow-hidden -rotate-1 my-4">
       <div class="marquee-track marker text-xl sm:text-3xl text-[var(--yellow)] gap-10 pr-10">
         <span class="flex items-center gap-10 pr-10">
-          <span>$CZ</span><span>✦</span><span data-i18n="marqueePaint">DRAWN IN PAINT</span><span>✦</span>
-          <span>$CZ</span><span>✦</span><span data-i18n="marqueeNfa">NOT FINANCIAL ADVICE</span><span>✦</span>
-          <span>$CZ</span><span>✦</span><span data-i18n="marqueeMoon">TO THE MOON, PROBABLY</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span class="marker" data-i18n="marqueePaint">DRAWN IN PAINT</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span class="marker" data-i18n="marqueeNfa">NOT FINANCIAL ADVICE</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span class="marker" data-i18n="marqueeMoon">TO THE MOON, PROBABLY</span><span>✦</span>
         </span>
         <span class="flex items-center gap-10 pr-10" aria-hidden="true">
-          <span>$CZ</span><span>✦</span><span data-i18n="marqueePaint">DRAWN IN PAINT</span><span>✦</span>
-          <span>$CZ</span><span>✦</span><span data-i18n="marqueeNfa">NOT FINANCIAL ADVICE</span><span>✦</span>
-          <span>$CZ</span><span>✦</span><span data-i18n="marqueeMoon">TO THE MOON, PROBABLY</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span class="marker" data-i18n="marqueePaint">DRAWN IN PAINT</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span class="marker" data-i18n="marqueeNfa">NOT FINANCIAL ADVICE</span><span>✦</span>
+          <span>$CZ</span><span>✦</span><span class="marker" data-i18n="marqueeMoon">TO THE MOON, PROBABLY</span><span>✦</span>
         </span>
       </div>
     </section>

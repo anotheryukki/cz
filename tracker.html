@@ -39,9 +39,18 @@
   a, button{ cursor:pointer; }
   .marker{ font-family:'Permanent Marker', cursive; }
 
-  /* ---------- Chinese type pairing ---------- */
-  html[lang="zh"] body{ font-family:'Noto Sans SC', sans-serif; }
-  html[lang="zh"] .marker{ font-family:'Ma Shan Zheng', cursive; }
+  /* ---------- Chinese type pairing ----------
+     scoped to translated text only — numbers, addresses, and tickers
+     stay in the original English fonts regardless of language */
+  html[lang="zh"] [data-i18n],
+  html[lang="zh"] [data-i18n-html],
+  html[lang="zh"] .i18n-frag{
+    font-family:'Noto Sans SC', sans-serif;
+  }
+  html[lang="zh"] [data-i18n].marker,
+  html[lang="zh"] [data-i18n-html].marker{
+    font-family:'Ma Shan Zheng', cursive;
+  }
 
   .bg-video-wrap{ position:fixed; inset:0; z-index:-30; overflow:hidden; }
   .bg-video-wrap video{
@@ -99,6 +108,22 @@
   .nav-link:hover{ color:var(--yellow); transform:translateY(-1px); }
   .nav-link:focus-visible{ outline:2px dashed var(--paper); outline-offset:4px; }
 
+  /* ---------- language toggle ---------- */
+  .lang-toggle{
+    display:inline-flex;
+    align-items:center;
+    padding:0.4rem 1rem;
+    border:2px solid var(--yellow);
+    border-radius:999px;
+    background:rgba(243,186,47,0.1);
+    color:var(--yellow);
+    box-shadow:0 2px 0 rgba(0,0,0,0.5), 0 4px 14px rgba(243,186,47,0.18);
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), background .2s ease, color .2s ease;
+  }
+  .lang-toggle:hover{ transform:rotate(-2deg) scale(1.06); background:rgba(243,186,47,0.22); }
+  .lang-toggle:active{ transform:rotate(-2deg) scale(0.95); }
+  .lang-toggle:focus-visible{ outline:3px dashed var(--paper); outline-offset:4px; }
+
   .site-header{ position:fixed; top:0; left:0; right:0; z-index:40; }
 
   .pulse-dot{ position:relative; width:10px; height:10px; border-radius:50%; background:var(--sap); }
@@ -141,7 +166,7 @@
 
   @media (prefers-reduced-motion: reduce){
     html{ scroll-behavior:auto; }
-    .reveal, .doodle-svg path, .btn-doodle, .copy-btn, .nav-link{ transition:none !important; }
+    .reveal, .doodle-svg path, .btn-doodle, .copy-btn, .nav-link, .lang-toggle{ transition:none !important; }
     .reveal{ opacity:1; transform:none; }
     .doodle-svg path{ stroke-dashoffset:0; }
     .pulse-dot::after{ animation:none; opacity:0; }
@@ -178,7 +203,7 @@
     <a href="index.html" class="marker text-xl sm:text-2xl text-[var(--paper)] nav-link" style="text-shadow:2px 2px 0 var(--yellow);">$CZ</a>
     <div class="flex items-center gap-4 sm:gap-6">
       <nav class="flex items-center gap-4 sm:gap-6">
-        <button id="lang-toggle" type="button" class="marker text-sm sm:text-base text-[var(--paper)] nav-link" aria-label="Switch language">中文</button>
+        <button id="lang-toggle" type="button" class="lang-toggle marker text-sm sm:text-base rotate-[-1deg]" aria-label="Switch language">中文</button>
         <a href="index.html" data-i18n="navHome" class="marker text-sm sm:text-base text-[var(--paper)] nav-link">HOME</a>
         <a href="https://x.com/cz_on_bnb" target="_blank" rel="noopener" aria-label="X (Twitter)"
            class="text-[var(--paper)] hover:text-[var(--yellow)] transition-colors">
@@ -445,9 +470,10 @@
         catGiggleCharity: 'Giggle Charity',
         totalDistributed: 'TOTAL DISTRIBUTED',
         claimedByHolders: 'CLAIMED BY HOLDERS',
-        stillUnclaimed: '{n} BNB still unclaimed',
+        stillUnclaimedPrefix: '',
+        stillUnclaimedSuffix: 'still unclaimed',
         minHold: 'MIN HOLD FOR DIVIDENDS',
-        supplyEarning: '{n}% of supply earning',
+        supplyEarningSuffix: 'of supply earning',
         autoSwap: 'AUTO-SWAP THRESHOLD',
         autoSwapDesc: 'tax tokens collected before auto-swap to BNB',
         checkHeading: 'CHECK YOUR DIVIDEND',
@@ -497,9 +523,10 @@
         catGiggleCharity: 'Giggle 慈善',
         totalDistributed: '累计分红总额',
         claimedByHolders: '持有人已领取',
-        stillUnclaimed: '还有 {n} BNB 尚未领取',
+        stillUnclaimedPrefix: '还有 ',
+        stillUnclaimedSuffix: '尚未领取',
         minHold: '分红所需最低持仓',
-        supplyEarning: '{n}% 的总量正在赚取分红',
+        supplyEarningSuffix: '的总量正在赚取分红',
         autoSwap: '自动兑换阈值',
         autoSwapDesc: '达到此数量的税费代币后自动兑换为 BNB',
         checkHeading: '查询你的分红',
@@ -525,8 +552,13 @@
       return localStorage.getItem(LANG_KEY) === 'zh' ? 'zh' : 'en';
     }
 
-    function fmtTpl(tpl, n) {
-      return tpl.replace('{n}', n);
+    function escapeHtml(s) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return s.replace(/[&<>"']/g, (c) => map[c]);
+    }
+
+    function wrapFrag(s) {
+      return s ? `<span class="i18n-frag">${escapeHtml(s)}</span>` : '';
     }
 
     function applyLang(lang) {
@@ -688,10 +720,10 @@
       const t = I18N[getLang()];
 
       document.getElementById('hero-minshare').textContent = d.minShare.toLocaleString(undefined, { maximumFractionDigits: 0 });
-      document.getElementById('token-name').textContent = d.name ? `${t.onChainName} ${d.name}` : '';
-      document.getElementById('stat-supply').textContent = `${t.supply} ${d.totalSupply.toLocaleString(undefined, { maximumFractionDigits: 0 })} $CZ`;
-      document.getElementById('stat-holders').textContent = `${t.holders} ${d.userCount.toLocaleString()}`;
-      document.getElementById('stat-owner').textContent = `${t.ownership} ` + (d.owner === '0x0000000000000000000000000000000000000000' ? t.renounced : t.activeOwner);
+      document.getElementById('token-name').innerHTML = d.name ? `${wrapFrag(t.onChainName)} ${escapeHtml(d.name)}` : '';
+      document.getElementById('stat-supply').innerHTML = `${wrapFrag(t.supply)} ${d.totalSupply.toLocaleString(undefined, { maximumFractionDigits: 0 })} $CZ`;
+      document.getElementById('stat-holders').innerHTML = `${wrapFrag(t.holders)} ${d.userCount.toLocaleString()}`;
+      document.getElementById('stat-owner').innerHTML = `${wrapFrag(t.ownership)} ${wrapFrag(d.owner === '0x0000000000000000000000000000000000000000' ? t.renounced : t.activeOwner)}`;
 
       document.getElementById('stat-buytax').textContent = `${d.buyTax}%`;
       document.getElementById('stat-selltax').textContent = `${d.sellTax}%`;
@@ -723,16 +755,18 @@
       categories.forEach((c) => {
         const li = document.createElement('li');
         li.className = 'flex items-center gap-2' + (c.rate === 0 ? ' opacity-40' : '');
-        li.innerHTML = `<span class="legend-dot" style="background:${c.color}"></span> ${c.key}: <strong>${c.rate}%</strong>`;
+        li.innerHTML = `<span class="legend-dot" style="background:${c.color}"></span> ${wrapFrag(c.key)}: <strong>${c.rate}%</strong>`;
         legend.appendChild(li);
       });
 
       document.getElementById('stat-dispatched').textContent = `${d.feeDispatched.toLocaleString(undefined, { maximumFractionDigits: 4 })} BNB`;
       document.getElementById('stat-dispatched-usd').textContent = d.price ? `≈ $${(d.feeDispatched * d.price).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '≈ $—';
       document.getElementById('stat-claimed').textContent = `${d.feeClaimed.toLocaleString(undefined, { maximumFractionDigits: 4 })} BNB`;
-      document.getElementById('stat-unclaimed').textContent = fmtTpl(t.stillUnclaimed, d.unclaimed.toLocaleString(undefined, { maximumFractionDigits: 4 }));
+      document.getElementById('stat-unclaimed').innerHTML =
+        `${wrapFrag(t.stillUnclaimedPrefix)}${d.unclaimed.toLocaleString(undefined, { maximumFractionDigits: 4 })} BNB ${wrapFrag(t.stillUnclaimedSuffix)}`;
       document.getElementById('stat-minshare').textContent = `${d.minShare.toLocaleString(undefined, { maximumFractionDigits: 0 })} $CZ`;
-      document.getElementById('stat-supplyshare').textContent = fmtTpl(t.supplyEarning, ((d.totalShares / d.totalSupply) * 100).toFixed(1));
+      document.getElementById('stat-supplyshare').innerHTML =
+        `${((d.totalShares / d.totalSupply) * 100).toFixed(1)}% ${wrapFrag(t.supplyEarningSuffix)}`;
       document.getElementById('stat-mindispatch').textContent = `${d.minDispatch.toLocaleString(undefined, { maximumFractionDigits: 0 })} $CZ`;
 
       sizeDoodles();
@@ -747,7 +781,7 @@
 
     function renderCheckResult(r) {
       const t = I18N[getLang()];
-      document.getElementById('res-eligible').textContent = r.eligible ? t.yes : t.no;
+      document.getElementById('res-eligible').innerHTML = wrapFrag(r.eligible ? t.yes : t.no);
       document.getElementById('res-claimed').textContent = `${r.claimed.toLocaleString(undefined, { maximumFractionDigits: 4 })} BNB`;
       claimLink.href = `https://bscscan.com/address/${CONTRACT}#writeContract`;
       claimLink.classList.remove('hidden');
