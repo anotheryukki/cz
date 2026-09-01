@@ -9,7 +9,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=VT323&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=VT323&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -38,6 +38,27 @@
 
   a, button{ cursor:pointer; }
   .marker{ font-family:'Permanent Marker', cursive; }
+
+  html[lang="zh"] [data-i18n],
+  html[lang="zh"] [data-i18n-html],
+  html[lang="zh"] .i18n-frag{
+    font-family:'Noto Sans SC', sans-serif;
+  }
+  html[lang="zh"] [data-i18n].marker,
+  html[lang="zh"] [data-i18n-html].marker{
+    font-family:'Ma Shan Zheng', cursive;
+  }
+
+  .lang-toggle{
+    display:inline-flex; align-items:center; padding:0.3rem 0.7rem;
+    border:2px solid var(--yellow); border-radius:999px;
+    background:rgba(243,186,47,0.1); color:var(--yellow);
+    font-family:'Permanent Marker', cursive;
+    transition:transform .2s cubic-bezier(.34,1.56,.64,1), background .2s ease;
+  }
+  .lang-toggle:hover{ transform:rotate(-2deg) scale(1.06); background:rgba(243,186,47,0.22); }
+  .lang-toggle:active{ transform:rotate(-2deg) scale(0.95); }
+  .lang-toggle:focus-visible{ outline:3px dashed var(--paper); outline-offset:4px; }
 
   .bg-video-wrap{ position:fixed; inset:0; z-index:-30; overflow:hidden; }
   .bg-video-wrap video{
@@ -123,10 +144,11 @@
   </svg>
 
   <div class="game-shell">
-    <header class="site-header flex items-center justify-between w-full max-w-[720px] py-3">
-      <a href="games.html" class="marker text-base sm:text-lg text-[var(--paper)] nav-link">◂ GAMES</a>
+    <header class="site-header flex items-center justify-between w-full max-w-[720px] py-3 gap-2">
+      <a href="games.html" data-i18n="navGames" class="marker text-base sm:text-lg text-[var(--paper)] nav-link">◂ GAMES</a>
       <span class="marker text-lg sm:text-xl text-[var(--yellow)] rotate-[-1deg]">CRYPTO CAPER</span>
       <span class="flex items-center gap-3 text-sm sm:text-base text-[var(--pencil)]">
+        <button id="lang-toggle" type="button" class="lang-toggle text-xs sm:text-sm rotate-[-1deg]" aria-label="Switch language">中文</button>
         <span id="mic-status">🎤 <span id="mic-status-text" class="text-[var(--pencil)]">LOCKED</span></span>
         <span>◆ <b id="data-label" class="text-[var(--paper)]">0/4</b></span>
       </span>
@@ -139,7 +161,7 @@
       </div>
     </div>
 
-    <p class="text-xs sm:text-sm text-[var(--pencil)] mt-3 text-center">WASD move &amp; jump &middot; J to hack</p>
+    <p class="text-xs sm:text-sm text-[var(--pencil)] mt-3 text-center" data-i18n="hintText">WASD move &amp; jump &middot; J to hack</p>
 
     <div id="touch-pad" class="fixed bottom-4 left-0 right-0 px-4 flex items-end justify-between pointer-events-none" style="display:none;">
       <div class="flex gap-3 pointer-events-auto">
@@ -198,6 +220,92 @@
     if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
       document.getElementById('touch-pad').style.display = 'flex';
     }
+
+    // ================= language =================
+    const LANG_KEY = 'cz-lang';
+    const I18N = {
+      en: {
+        navGames: '◂ GAMES',
+        hintText: 'WASD move &amp; jump &middot; J to hack',
+        micLocked: 'LOCKED',
+        micReady: 'READY',
+        readyWasd: 'WASD MOVE + JUMP',
+        readyFindMic: 'FIND THE MIC TO UNLOCK J',
+        pressAnyKey: 'PRESS ANY KEY TO START',
+        networkSecured: 'NETWORK SECURED',
+        timeLabel: 'TIME',
+        deathsLabel: 'DEATHS',
+        replayPrompt: 'R TO REPLAY',
+        findMicFirst: 'FIND THE MIC FIRST',
+        platformStabilized: 'PLATFORM STABILIZED',
+        droneDisabled: 'DRONE DISABLED',
+        gateOpened: 'GATE OPENED',
+        micUnlockedMsg: 'MIC UNLOCKED — J TO HACK',
+        walkIntoMic: 'WALK INTO THE MIC',
+        timeTheLaser: 'TIME THE LASER',
+        needMoreData: 'NEED {n} MORE DATA',
+        jToStabilize: 'J TO STABILIZE',
+        needTheMic: 'NEED THE MIC',
+        jToDisableDrone: 'J TO DISABLE DRONE',
+        jToHackSwitch: 'J TO HACK SWITCH',
+      },
+      zh: {
+        navGames: '◂ 游戏',
+        hintText: 'WASD 移动跳跃 &middot; J 破解',
+        micLocked: '未解锁',
+        micReady: '已解锁',
+        readyWasd: 'WASD 移动 + 跳跃',
+        readyFindMic: '找到麦克风以解锁 J',
+        pressAnyKey: '按任意键开始',
+        networkSecured: '网络已安全',
+        timeLabel: '用时',
+        deathsLabel: '死亡次数',
+        replayPrompt: '按 R 重新挑战',
+        findMicFirst: '先找到麦克风',
+        platformStabilized: '平台已稳定',
+        droneDisabled: '无人机已禁用',
+        gateOpened: '闸门已打开',
+        micUnlockedMsg: '麦克风已解锁 — 按 J 破解',
+        walkIntoMic: '走向麦克风拾取',
+        timeTheLaser: '掌握激光时机',
+        needMoreData: '还需 {n} 个数据块',
+        jToStabilize: '按 J 稳定平台',
+        needTheMic: '需要麦克风',
+        jToDisableDrone: '按 J 禁用无人机',
+        jToHackSwitch: '按 J 破解开关',
+      },
+    };
+    function getLang() { return localStorage.getItem(LANG_KEY) === 'zh' ? 'zh' : 'en'; }
+    function T(key, vars) {
+      let s = I18N[getLang()][key];
+      if (vars) Object.keys(vars).forEach((k) => { s = s.replace('{' + k + '}', vars[k]); });
+      return s;
+    }
+    function markerFont(px) { return px + "px '" + (getLang() === 'zh' ? 'Ma Shan Zheng' : 'Permanent Marker') + "', cursive"; }
+    function bodyFont(px) { return px + "px '" + (getLang() === 'zh' ? 'Noto Sans SC' : 'VT323') + "', monospace"; }
+
+    function updateMicStatusLabel() {
+      const micText = document.getElementById('mic-status-text');
+      micText.textContent = player.micUnlocked ? T('micReady') : T('micLocked');
+      micText.className = player.micUnlocked ? 'text-[var(--yellow)]' : 'text-[var(--pencil)]';
+    }
+
+    function applyLang(lang) {
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const key = el.getAttribute('data-i18n');
+        if (I18N[lang][key] !== undefined) el.innerHTML = I18N[lang][key];
+      });
+      const toggle = document.getElementById('lang-toggle');
+      if (toggle) toggle.textContent = lang === 'zh' ? 'EN' : '中文';
+      updateMicStatusLabel();
+      sizeDoodle();
+    }
+    document.getElementById('lang-toggle').addEventListener('click', () => {
+      const next = getLang() === 'zh' ? 'en' : 'zh';
+      localStorage.setItem(LANG_KEY, next);
+      applyLang(next);
+    });
 
     // ================= palette =================
     const COL = {
@@ -335,7 +443,7 @@
 
     function tryMicHack() {
       if (state !== 'playing') return;
-      if (!player.micUnlocked) { showMessage('FIND THE MIC FIRST'); return; }
+      if (!player.micUnlocked) { showMessage(T('findMicFirst')); return; }
       if (player.micCooldown > 0) return;
       player.micCooldown = 1.2;
       pulses.push({
@@ -468,20 +576,20 @@
           p.hitGlitch = true;
           glitchPlat.active = true;
           glitchPlat.timer = glitchPlat.maxTimer;
-          showMessage('PLATFORM STABILIZED', 1.1, '#f3ba2f');
+          showMessage(T('platformStabilized'), 1.1, '#f3ba2f');
         }
         const dc = { x: drone.x + drone.w / 2, y: drone.y + drone.h / 2 };
         if (!p.hitDrone && drone.disabledTimer <= 0 && p.r >= dist(p.x, p.y, dc.x, dc.y)) {
           p.hitDrone = true;
           drone.disabledTimer = 4;
-          showMessage('DRONE DISABLED', 1.1, '#f3ba2f');
+          showMessage(T('droneDisabled'), 1.1, '#f3ba2f');
         }
         const sc = { x: switchObj.x + switchObj.w / 2, y: switchObj.y + switchObj.h / 2 };
         if (!p.hitSwitch && !switchObj.activated && p.r >= dist(p.x, p.y, sc.x, sc.y)) {
           p.hitSwitch = true;
           switchObj.activated = true;
           gate.open = true;
-          showMessage('GATE OPENED', 1.1, '#f3ba2f');
+          showMessage(T('gateOpened'), 1.1, '#f3ba2f');
         }
       });
       pulses = pulses.filter((p) => p.r < p.maxR);
@@ -491,10 +599,8 @@
         micPickup.collected = true;
         player.micUnlocked = true;
         spawnParticles(micPickup.x + 5, micPickup.y + 5, '#f3ba2f', 16);
-        showMessage('MIC UNLOCKED — J TO HACK', 1.6, '#f3ba2f');
-        const micText = document.getElementById('mic-status-text');
-        micText.textContent = 'READY';
-        micText.className = 'text-[var(--yellow)]';
+        showMessage(T('micUnlockedMsg'), 1.6, '#f3ba2f');
+        updateMicStatusLabel();
       }
       dataBlocks.forEach((b) => {
         if (!b.collected && rectOverlap(player, b)) {
@@ -795,7 +901,7 @@
     }
 
     function drawWorldLabel(text, cx, y) {
-      ctx.font = "7px 'VT323', monospace";
+      ctx.font = bodyFont(7);
       ctx.textAlign = 'center';
       const w = ctx.measureText(text).width;
       ctx.fillStyle = 'rgba(0,0,0,0.65)';
@@ -807,7 +913,7 @@
     function drawHudMessage() {
       if (!hudMessage) return;
       ctx.textAlign = 'center';
-      ctx.font = "9px 'VT323', monospace";
+      ctx.font = bodyFont(9);
       const w = ctx.measureText(hudMessage).width;
       ctx.globalAlpha = Math.min(1, hudMessageTimer * 3);
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
@@ -821,28 +927,28 @@
       if (state !== 'playing') return null;
 
       if (!micPickup.collected && dist(player.x, player.y, micPickup.x, micPickup.y) < 55) {
-        return { text: 'WALK INTO THE MIC', x: micPickup.x + 5, y: micPickup.y - 8 };
+        return { text: T('walkIntoMic'), x: micPickup.x + 5, y: micPickup.y - 8 };
       }
 
       const glitchCx = glitchPlat.x + glitchPlat.w / 2;
       if (!glitchPlat.active && Math.abs(player.x - glitchCx) < 65) {
-        return { text: player.micUnlocked ? 'J TO STABILIZE' : 'NEED THE MIC', x: glitchCx, y: glitchPlat.y - 12 };
+        return { text: player.micUnlocked ? T('jToStabilize') : T('needTheMic'), x: glitchCx, y: glitchPlat.y - 12 };
       }
 
       if (drone.disabledTimer <= 0 && Math.abs(player.x - (drone.x + drone.w / 2)) < 70 && player.x < drone.maxX + 20) {
-        return { text: player.micUnlocked ? 'J TO DISABLE DRONE' : 'NEED THE MIC', x: drone.x + drone.w / 2, y: drone.y - 12 };
+        return { text: player.micUnlocked ? T('jToDisableDrone') : T('needTheMic'), x: drone.x + drone.w / 2, y: drone.y - 12 };
       }
 
       if (!switchObj.activated && Math.abs(player.x - switchObj.x) < 55) {
-        return { text: player.micUnlocked ? 'J TO HACK SWITCH' : 'NEED THE MIC', x: switchObj.x + 5, y: switchObj.y - 14 };
+        return { text: player.micUnlocked ? T('jToHackSwitch') : T('needTheMic'), x: switchObj.x + 5, y: switchObj.y - 14 };
       }
 
       if (player.x > laserEye.x - 110 && player.x < laserEye.x - 15) {
-        return { text: 'TIME THE LASER', x: laserEye.x, y: laserEye.y - 14 };
+        return { text: T('timeTheLaser'), x: laserEye.x, y: laserEye.y - 14 };
       }
 
       if (dataCount < TOTAL_DATA && dist(player.x, player.y, server.x, server.y) < 75) {
-        return { text: 'NEED ' + (TOTAL_DATA - dataCount) + ' MORE DATA', x: server.x + server.w / 2, y: server.y - 10 };
+        return { text: T('needMoreData', { n: TOTAL_DATA - dataCount }), x: server.x + server.w / 2, y: server.y - 10 };
       }
 
       return null;
@@ -866,32 +972,32 @@
       if (state === 'ready') {
         ctx.fillStyle = 'rgba(0,0,0,0.35)';
         ctx.fillRect(0, 0, GAME_W, GAME_H);
-        ctx.font = "18px 'Permanent Marker', cursive";
+        ctx.font = markerFont(18);
         ctx.fillStyle = '#f3ba2f';
         ctx.fillText('CRYPTO CAPER', GAME_W / 2, GAME_H * 0.38);
-        ctx.font = "10px 'VT323', monospace";
+        ctx.font = bodyFont(10);
         ctx.fillStyle = 'rgba(251,251,243,0.85)';
-        ctx.fillText('WASD MOVE + JUMP', GAME_W / 2, GAME_H * 0.48);
+        ctx.fillText(T('readyWasd'), GAME_W / 2, GAME_H * 0.48);
         ctx.fillStyle = '#f3ba2f';
-        ctx.fillText('FIND THE MIC TO UNLOCK J', GAME_W / 2, GAME_H * 0.57);
+        ctx.fillText(T('readyFindMic'), GAME_W / 2, GAME_H * 0.57);
         ctx.fillStyle = 'rgba(251,251,243,0.85)';
         const bob = Math.sin(animT * 3) * 2;
-        ctx.fillText('PRESS ANY KEY TO START', GAME_W / 2, GAME_H * 0.76 + bob);
+        ctx.fillText(T('pressAnyKey'), GAME_W / 2, GAME_H * 0.76 + bob);
       }
 
       if (state === 'win') {
         ctx.fillStyle = 'rgba(0,0,0,0.65)';
         ctx.fillRect(0, 0, GAME_W, GAME_H);
-        ctx.font = "18px 'Permanent Marker', cursive";
+        ctx.font = markerFont(18);
         ctx.fillStyle = '#7a9a4a';
-        ctx.fillText('NETWORK SECURED', GAME_W / 2, GAME_H * 0.38);
-        ctx.font = "10px 'VT323', monospace";
+        ctx.fillText(T('networkSecured'), GAME_W / 2, GAME_H * 0.38);
+        ctx.font = bodyFont(10);
         ctx.fillStyle = '#fbfbf3';
-        ctx.fillText('TIME  ' + elapsed.toFixed(1) + 's', GAME_W / 2, GAME_H * 0.52);
+        ctx.fillText(T('timeLabel') + '  ' + elapsed.toFixed(1) + 's', GAME_W / 2, GAME_H * 0.52);
         ctx.fillStyle = '#f3ba2f';
-        ctx.fillText('DEATHS  ' + deaths, GAME_W / 2, GAME_H * 0.60);
+        ctx.fillText(T('deathsLabel') + '  ' + deaths, GAME_W / 2, GAME_H * 0.60);
         ctx.fillStyle = 'rgba(251,251,243,0.7)';
-        ctx.fillText('R TO REPLAY', GAME_W / 2, GAME_H * 0.72);
+        ctx.fillText(T('replayPrompt'), GAME_W / 2, GAME_H * 0.72);
       }
     }
 
@@ -906,9 +1012,7 @@
       dataBlocks.forEach((b) => (b.collected = false));
       dataCount = 0;
       document.getElementById('data-label').textContent = '0/' + TOTAL_DATA;
-      const micText = document.getElementById('mic-status-text');
-      micText.textContent = 'LOCKED';
-      micText.className = 'text-[var(--pencil)]';
+      updateMicStatusLabel();
       hudMessage = null; hudMessageTimer = 0;
       gate.open = false; switchObj.activated = false;
       glitchPlat.active = false; glitchPlat.timer = 0;
@@ -935,6 +1039,7 @@
     }
 
     fitCanvas();
+    applyLang(getLang());
     requestAnimationFrame(loop);
 
     const vid = document.getElementById('bgvideo');

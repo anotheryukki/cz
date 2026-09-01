@@ -9,7 +9,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=VT323&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=VT323&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -38,6 +38,27 @@
 
   a, button{ cursor:pointer; }
   .marker{ font-family:'Permanent Marker', cursive; }
+
+  html[lang="zh"] [data-i18n],
+  html[lang="zh"] [data-i18n-html],
+  html[lang="zh"] .i18n-frag{
+    font-family:'Noto Sans SC', sans-serif;
+  }
+  html[lang="zh"] [data-i18n].marker,
+  html[lang="zh"] [data-i18n-html].marker{
+    font-family:'Ma Shan Zheng', cursive;
+  }
+
+  .lang-toggle{
+    display:inline-flex; align-items:center; padding:0.3rem 0.7rem;
+    border:2px solid var(--yellow); border-radius:999px;
+    background:rgba(243,186,47,0.1); color:var(--yellow);
+    font-family:'Permanent Marker', cursive;
+    transition:transform .2s cubic-bezier(.34,1.56,.64,1), background .2s ease;
+  }
+  .lang-toggle:hover{ transform:rotate(-2deg) scale(1.06); background:rgba(243,186,47,0.22); }
+  .lang-toggle:active{ transform:rotate(-2deg) scale(0.95); }
+  .lang-toggle:focus-visible{ outline:3px dashed var(--paper); outline-offset:4px; }
 
   .bg-video-wrap{ position:fixed; inset:0; z-index:-30; overflow:hidden; }
   .bg-video-wrap video{
@@ -118,10 +139,13 @@
   </svg>
 
   <div class="game-shell">
-    <header class="site-header flex items-center justify-between w-full max-w-[520px] py-3">
-      <a href="games.html" class="marker text-base sm:text-lg text-[var(--paper)] nav-link">◂ GAMES</a>
+    <header class="site-header flex items-center justify-between w-full max-w-[520px] py-3 gap-2">
+      <a href="games.html" data-i18n="navGames" class="marker text-base sm:text-lg text-[var(--paper)] nav-link">◂ GAMES</a>
       <span class="marker text-lg sm:text-xl text-[var(--yellow)] rotate-[-1deg]">BULL RUN</span>
-      <span class="text-sm sm:text-base text-[var(--pencil)]">BEST <b id="best-label" class="text-[var(--paper)]">0</b></span>
+      <span class="flex items-center gap-3">
+        <button id="lang-toggle" type="button" class="lang-toggle text-xs sm:text-sm rotate-[-1deg]" aria-label="Switch language">中文</button>
+        <span class="text-sm sm:text-base text-[var(--pencil)]"><span data-i18n="bestLabel">BEST</span> <b id="best-label" class="text-[var(--paper)]">0</b></span>
+      </span>
     </header>
 
     <div class="doodle relative mt-1 sm:mt-3" id="canvas-wrap">
@@ -131,7 +155,7 @@
       </div>
     </div>
 
-    <p class="text-xs sm:text-sm text-[var(--pencil)] mt-3 text-center">SPACE · CLICK · TAP to pump</p>
+    <p class="text-xs sm:text-sm text-[var(--pencil)] mt-3 text-center" data-i18n="hintText">SPACE · CLICK · TAP to pump</p>
   </div>
 
   <script>
@@ -176,6 +200,53 @@
     }
     window.addEventListener('resize', fitCanvas);
     window.addEventListener('orientationchange', fitCanvas);
+
+    // ================= language =================
+    const LANG_KEY = 'cz-lang';
+    const I18N = {
+      en: {
+        navGames: '◂ GAMES',
+        bestLabel: 'BEST',
+        hintText: 'SPACE · CLICK · TAP to pump',
+        volatilitySpike: 'VOLATILITY SPIKE',
+        tapClickSpace: 'TAP / CLICK / SPACE',
+        toPump: 'TO PUMP',
+        rekt: 'REKT',
+        scoreLabel: 'SCORE',
+        tapToRetry: 'TAP TO RETRY',
+      },
+      zh: {
+        navGames: '◂ 游戏',
+        bestLabel: '最高分',
+        hintText: '空格 · 点击 · 轻触 拉盘',
+        volatilitySpike: '剧烈波动',
+        tapClickSpace: '轻触 / 点击 / 空格',
+        toPump: '开始拉盘',
+        rekt: '爆仓了',
+        scoreLabel: '分数',
+        tapToRetry: '轻触重新开始',
+      },
+    };
+    function getLang() { return localStorage.getItem(LANG_KEY) === 'zh' ? 'zh' : 'en'; }
+    function T(key) { return I18N[getLang()][key]; }
+    function markerFont(px) { return px + "px '" + (getLang() === 'zh' ? 'Ma Shan Zheng' : 'Permanent Marker') + "', cursive"; }
+    function bodyFont(px) { return px + "px '" + (getLang() === 'zh' ? 'Noto Sans SC' : 'VT323') + "', monospace"; }
+
+    function applyLang(lang) {
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const key = el.getAttribute('data-i18n');
+        if (I18N[lang][key] !== undefined) el.textContent = I18N[lang][key];
+      });
+      const toggle = document.getElementById('lang-toggle');
+      if (toggle) toggle.textContent = lang === 'zh' ? 'EN' : '中文';
+    }
+    document.getElementById('lang-toggle').addEventListener('click', () => {
+      const next = getLang() === 'zh' ? 'en' : 'zh';
+      localStorage.setItem(LANG_KEY, next);
+      applyLang(next);
+    });
+    applyLang(getLang());
 
     // ================= game constants (all in logical units) =================
     const GRAVITY = 1500;
@@ -268,7 +339,7 @@
     function triggerVolatility() {
       volatilityActive = true;
       volatilityTimer = 2.6;
-      toasts.push({ x: PLAYER_X + 40, y: player.y - 30, life: 1.4, maxLife: 1.4, text: 'VOLATILITY SPIKE' });
+      toasts.push({ x: PLAYER_X + 40, y: player.y - 30, life: 1.4, maxLife: 1.4, text: T('volatilitySpike') });
       shakeTimer = Math.max(shakeTimer, 0.25);
     }
 
@@ -464,7 +535,7 @@
     function drawToasts() {
       toasts.forEach((t) => {
         ctx.globalAlpha = Math.max(0, t.life / t.maxLife);
-        ctx.font = "20px 'Permanent Marker', cursive";
+        ctx.font = markerFont(20);
         ctx.fillStyle = '#ff6b5e';
         ctx.textAlign = 'center';
         ctx.fillText(t.text, Math.min(Math.max(t.x, 90), LOGICAL_W - 20), t.y);
@@ -474,7 +545,7 @@
 
     function drawHUD() {
       if (state === 'playing') {
-        ctx.font = "48px 'Permanent Marker', cursive";
+        ctx.font = markerFont(48);
         ctx.fillStyle = 'rgba(251,251,243,0.92)';
         ctx.textAlign = 'center';
         ctx.shadowColor = 'rgba(0,0,0,0.6)';
@@ -490,7 +561,7 @@
 
       if (state === 'ready') {
         ctx.textAlign = 'center';
-        ctx.font = "38px 'Permanent Marker', cursive";
+        ctx.font = markerFont(38);
         ctx.fillStyle = '#f3ba2f';
         ctx.save();
         ctx.translate(LOGICAL_W / 2, LOGICAL_H * 0.32);
@@ -498,11 +569,11 @@
         ctx.fillText('BULL RUN', 0, 0);
         ctx.restore();
 
-        ctx.font = "22px 'VT323', monospace";
+        ctx.font = bodyFont(22);
         ctx.fillStyle = 'rgba(251,251,243,0.85)';
         const bob = Math.sin(idleT * 3) * 4;
-        ctx.fillText('TAP / CLICK / SPACE', LOGICAL_W / 2, LOGICAL_H * 0.62 + bob);
-        ctx.fillText('TO PUMP', LOGICAL_W / 2, LOGICAL_H * 0.62 + 26 + bob);
+        ctx.fillText(T('tapClickSpace'), LOGICAL_W / 2, LOGICAL_H * 0.62 + bob);
+        ctx.fillText(T('toPump'), LOGICAL_W / 2, LOGICAL_H * 0.62 + 26 + bob);
       }
 
       if (state === 'gameover') {
@@ -510,21 +581,21 @@
         ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
 
         ctx.textAlign = 'center';
-        ctx.font = "40px 'Permanent Marker', cursive";
+        ctx.font = markerFont(40);
         ctx.fillStyle = '#ff6b5e';
-        ctx.fillText('REKT', LOGICAL_W / 2, LOGICAL_H * 0.36);
+        ctx.fillText(T('rekt'), LOGICAL_W / 2, LOGICAL_H * 0.36);
 
-        ctx.font = "30px 'VT323', monospace";
+        ctx.font = bodyFont(30);
         ctx.fillStyle = '#fbfbf3';
-        ctx.fillText('SCORE  ' + score, LOGICAL_W / 2, LOGICAL_H * 0.36 + 46);
+        ctx.fillText(T('scoreLabel') + '  ' + score, LOGICAL_W / 2, LOGICAL_H * 0.36 + 46);
         ctx.fillStyle = '#f3ba2f';
-        ctx.fillText('BEST  ' + best, LOGICAL_W / 2, LOGICAL_H * 0.36 + 76);
+        ctx.fillText(T('bestLabel') + '  ' + best, LOGICAL_W / 2, LOGICAL_H * 0.36 + 76);
 
         if (gameOverCooldown <= 0) {
-          ctx.font = "20px 'VT323', monospace";
+          ctx.font = bodyFont(20);
           ctx.fillStyle = 'rgba(251,251,243,0.8)';
           const bob = Math.sin(performance.now() / 220) * 3;
-          ctx.fillText('TAP TO RETRY', LOGICAL_W / 2, LOGICAL_H * 0.36 + 120 + bob);
+          ctx.fillText(T('tapToRetry'), LOGICAL_W / 2, LOGICAL_H * 0.36 + 120 + bob);
         }
       }
     }
