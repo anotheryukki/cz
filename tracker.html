@@ -71,7 +71,7 @@
   .doodle{ position:relative; }
   .doodle-svg{ position:absolute; top:-10px; left:-10px; pointer-events:none; overflow:visible; }
   .doodle-svg path{
-    fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
+    fill:none; stroke-width:3; vector-effect:non-scaling-stroke; stroke-linecap:round; stroke-linejoin:round;
     stroke-dasharray:1000; stroke-dashoffset:1000;
     transition:stroke-dashoffset 1.1s cubic-bezier(.34,1.1,.4,1);
   }
@@ -191,10 +191,10 @@
 
   <svg width="0" height="0" style="position:absolute">
     <symbol id="doodleRect" viewBox="0 0 300 100" preserveAspectRatio="none">
-      <path fill="none" d="M9,7 L58,2 L131,8 L203,1 L293,9
-               L297,38 L300,68 L293,97
-               L228,91 L149,98 L77,92 L5,96
-               L1,58 L7,29 Z" />
+      <path fill="none" d="M8,3 L60,1 L130,3 L200,1 L292,3
+               L297,34 L300,64 L297,96
+               L230,98 L150,99 L78,98 L4,99
+               L1,62 L4,30 Z" />
     </symbol>
   </svg>
 
@@ -205,6 +205,7 @@
       <nav class="flex items-center gap-4 sm:gap-6">
         <button id="lang-toggle" type="button" class="lang-toggle marker text-sm sm:text-base rotate-[-1deg]" aria-label="Switch language">中文</button>
         <a href="index.html" data-i18n="navHome" class="marker text-sm sm:text-base text-[var(--paper)] nav-link">HOME</a>
+        <a href="games.html" data-i18n="navGames" class="marker text-sm sm:text-base text-[var(--paper)] nav-link">GAMES</a>
         <a href="https://x.com/cz_on_bnb" target="_blank" rel="noopener" aria-label="X (Twitter)"
            class="text-[var(--paper)] hover:text-[var(--yellow)] transition-colors">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -439,6 +440,7 @@
     const I18N = {
       en: {
         navHome: 'HOME',
+        navGames: 'GAMES',
         navBuy: 'BUY $CZ',
         heroTitle: 'DIVIDEND TRACKER',
         heroDesc1: "Every $CZ buy and sell carries a small tax, and it flows straight back to holders in BNB — no wallet, no middleman, all handled by the contract itself. Hold at least",
@@ -492,6 +494,7 @@
       },
       zh: {
         navHome: '首页',
+        navGames: '游戏',
         navBuy: '购买 $CZ',
         heroTitle: '分红追踪器',
         heroDesc1: '每一笔 $CZ 买卖都会产生少量税费，并直接以 BNB 形式返还给持有人 —— 无需钱包，无需中间人，全部由合约自动完成。只要持有至少',

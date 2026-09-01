@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Bull Run — $CZ Games</title>
+<meta name="description" content="Bull Run — tap to pump, gravity to dump. Thread your trendline through the candlesticks." />
+<link rel="icon" type="image/jpeg" href="pfp.jpg" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=VT323&display=swap" rel="stylesheet" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  :root{
+    --ink:#0a0a0a;
+    --paper:#fbfbf3;
+    --yellow:#f3ba2f;
+    --yellow-deep:#c98f0a;
+    --pencil:#a9a89f;
+    --sap:#7a9a4a;
+    --rust:#c1443c;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html, body{ height:100%; overscroll-behavior:none; }
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'VT323', monospace;
+    cursor:crosshair;
+    overflow:hidden;
+    touch-action:none;
+  }
+
+  a, button{ cursor:pointer; }
+  .marker{ font-family:'Permanent Marker', cursive; }
+
+  .bg-video-wrap{ position:fixed; inset:0; z-index:-30; overflow:hidden; }
+  .bg-video-wrap video{
+    position:absolute; top:50%; left:50%;
+    min-width:100%; min-height:100%; width:auto; height:auto;
+    transform:translate(-50%,-50%);
+    object-fit:cover;
+    filter:saturate(0.7) contrast(1.05) brightness(0.6);
+  }
+  .bg-overlay{
+    position:fixed; inset:0; z-index:-20;
+    background:rgba(0,0,0,0.78);
+  }
+  .bg-grain{ position:fixed; inset:0; z-index:-10; opacity:0.05; mix-blend-mode:overlay; pointer-events:none; }
+
+  .doodle{ position:relative; }
+  .doodle-svg{ position:absolute; top:-10px; left:-10px; pointer-events:none; overflow:visible; }
+  .doodle-svg path{
+    fill:none; stroke-width:3; vector-effect:non-scaling-stroke; stroke-linecap:round; stroke-linejoin:round;
+  }
+
+  .nav-link{ transition:color .2s ease, transform .2s ease; }
+  .nav-link:hover{ color:var(--yellow); transform:translateY(-1px); }
+  .nav-link:focus-visible{ outline:2px dashed var(--paper); outline-offset:4px; }
+
+  .site-header{ position:relative; z-index:40; flex-shrink:0; }
+
+  .btn-doodle{
+    display:inline-block; padding:0.6rem 1.4rem;
+    background:var(--yellow); color:var(--ink);
+    transition:transform .2s cubic-bezier(.34,1.56,.64,1), background .2s ease;
+  }
+  .btn-doodle:hover{ transform:rotate(-1.5deg) scale(1.04); background:#ffcb4d; }
+  .btn-doodle:active{ transform:rotate(-1.5deg) scale(0.97); }
+  .btn-doodle:focus-visible{ outline:3px dashed var(--paper); outline-offset:4px; }
+
+  #game-canvas{
+    display:block;
+    background:#050505;
+    touch-action:none;
+    border-radius:2px;
+  }
+
+  .game-shell{
+    display:flex; flex-direction:column; align-items:center;
+    height:100%;
+    padding:0 1rem;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .btn-doodle, .nav-link{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg-video-wrap">
+    <video autoplay muted loop playsinline id="bgvideo">
+      <source src="czcz.mp4" type="video/mp4" />
+    </video>
+  </div>
+  <div class="bg-overlay"></div>
+  <svg class="bg-grain" width="100%" height="100%">
+    <filter id="noiseFilter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"></feTurbulence>
+      <feColorMatrix type="saturate" values="0"></feColorMatrix>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noiseFilter)"></rect>
+  </svg>
+
+  <svg width="0" height="0" style="position:absolute">
+    <symbol id="doodleRect" viewBox="0 0 300 100" preserveAspectRatio="none">
+      <path fill="none" d="M8,3 L60,1 L130,3 L200,1 L292,3
+               L297,34 L300,64 L297,96
+               L230,98 L150,99 L78,98 L4,99
+               L1,62 L4,30 Z" />
+    </symbol>
+  </svg>
+
+  <div class="game-shell">
+    <header class="site-header flex items-center justify-between w-full max-w-[520px] py-3">
+      <a href="games.html" class="marker text-base sm:text-lg text-[var(--paper)] nav-link">◂ GAMES</a>
+      <span class="marker text-lg sm:text-xl text-[var(--yellow)] rotate-[-1deg]">BULL RUN</span>
+      <span class="text-sm sm:text-base text-[var(--pencil)]">BEST <b id="best-label" class="text-[var(--paper)]">0</b></span>
+    </header>
+
+    <div class="doodle relative mt-1 sm:mt-3" id="canvas-wrap">
+      <svg class="doodle-svg" preserveAspectRatio="none"><use href="#doodleRect" stroke="var(--yellow)" fill="none"></use></svg>
+      <div class="doodle-content">
+        <canvas id="game-canvas"></canvas>
+      </div>
+    </div>
+
+    <p class="text-xs sm:text-sm text-[var(--pencil)] mt-3 text-center">SPACE · CLICK · TAP to pump</p>
+  </div>
+
+  <script>
+    // ================= canvas + responsive fit =================
+    const LOGICAL_W = 480, LOGICAL_H = 640;
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const wrap = document.getElementById('canvas-wrap');
+
+    function sizeDoodle() {
+      const svg = wrap.querySelector('.doodle-svg');
+      const content = wrap.querySelector('.doodle-content');
+      svg.style.width = content.offsetWidth + 20 + 'px';
+      svg.style.height = content.offsetHeight + 20 + 'px';
+    }
+
+    function fitCanvas() {
+      const header = document.querySelector('.site-header');
+      const hint = document.querySelector('.game-shell > p');
+      const reserved = (header ? header.offsetHeight : 60) + (hint ? hint.offsetHeight : 24) + 48;
+      const availW = Math.min(LOGICAL_W, window.innerWidth * 0.94);
+      const availH = Math.max(280, window.innerHeight - reserved);
+
+      let dispW = availW;
+      let dispH = dispW * (LOGICAL_H / LOGICAL_W);
+      if (dispH > availH) {
+        dispH = availH;
+        dispW = dispH * (LOGICAL_W / LOGICAL_H);
+      }
+
+      canvas.style.width = dispW + 'px';
+      canvas.style.height = dispH + 'px';
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(dispW * dpr);
+      canvas.height = Math.round(dispH * dpr);
+
+      const scale = canvas.width / LOGICAL_W;
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+
+      sizeDoodle();
+    }
+    window.addEventListener('resize', fitCanvas);
+    window.addEventListener('orientationchange', fitCanvas);
+
+    // ================= game constants (all in logical units) =================
+    const GRAVITY = 1500;
+    const JUMP_V = -430;
+    const PLAYER_X = 108;
+    const PLAYER_R = 9;
+
+    const BASE_SCROLL = 165, MAX_SCROLL = 255;
+    const BASE_GAP = 205, MIN_GAP = 152;
+    const BASE_SPAWN = 1.55, MIN_SPAWN = 1.05;
+    const CANDLE_W = 60;
+    const RAMP_SCORE = 40;
+
+    const SAP = '#7a9a4a', RUST = '#c1443c';
+
+    // ================= state =================
+    let state = 'ready'; // ready | playing | gameover
+    let player = { y: LOGICAL_H / 2, vy: 0 };
+    let trail = [];
+    let obstacles = [];
+    let particles = [];
+    let toasts = [];
+    let score = 0;
+    let best = parseInt(localStorage.getItem('cz-bullrun-best') || '0', 10);
+    let spawnTimer = 0;
+    let spawnCount = 0;
+    let idleT = 0;
+    let gameOverCooldown = 0;
+    let volatilityActive = false;
+    let volatilityTimer = 0;
+    let shakeTimer = 0;
+    let lastTime = null;
+
+    document.getElementById('best-label').textContent = best;
+
+    function difficulty(s) {
+      const k = Math.min(s, RAMP_SCORE) / RAMP_SCORE;
+      return {
+        scroll: BASE_SCROLL + k * (MAX_SCROLL - BASE_SCROLL),
+        gap: BASE_GAP - k * (BASE_GAP - MIN_GAP),
+        spawn: BASE_SPAWN - k * (BASE_SPAWN - MIN_SPAWN),
+      };
+    }
+
+    function resetGame() {
+      player.y = LOGICAL_H / 2;
+      player.vy = 0;
+      trail = [];
+      for (let i = 0; i < 40; i++) trail.push({ x: PLAYER_X - i * 3, y: LOGICAL_H / 2 });
+      obstacles = [];
+      particles = [];
+      toasts = [];
+      score = 0;
+      spawnTimer = 0.6;
+      spawnCount = 0;
+      volatilityActive = false;
+      volatilityTimer = 0;
+    }
+
+    function spawnObstacle() {
+      const d = difficulty(score);
+      spawnCount++;
+      const volatile = spawnCount % 5 === 0;
+      const margin = 60;
+      const gapY = margin + Math.random() * (LOGICAL_H - margin * 2 - d.gap);
+      obstacles.push({
+        x: LOGICAL_W + CANDLE_W,
+        gapY, gapH: d.gap,
+        passed: false,
+        color: Math.random() < 0.5 ? SAP : RUST,
+        volatile,
+      });
+    }
+
+    function spawnParticles(x, y, color) {
+      for (let i = 0; i < 22; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const spd = 60 + Math.random() * 220;
+        particles.push({
+          x, y,
+          vx: Math.cos(a) * spd,
+          vy: Math.sin(a) * spd,
+          life: 0.5 + Math.random() * 0.35,
+          maxLife: 0.5 + Math.random() * 0.35,
+          color: color || '#f3ba2f',
+        });
+      }
+    }
+
+    function triggerVolatility() {
+      volatilityActive = true;
+      volatilityTimer = 2.6;
+      toasts.push({ x: PLAYER_X + 40, y: player.y - 30, life: 1.4, maxLife: 1.4, text: 'VOLATILITY SPIKE' });
+      shakeTimer = Math.max(shakeTimer, 0.25);
+    }
+
+    function triggerGameOver() {
+      if (state !== 'playing') return;
+      state = 'gameover';
+      gameOverCooldown = 0.5;
+      shakeTimer = 0.35;
+      spawnParticles(PLAYER_X, player.y, '#f3ba2f');
+      if (score > best) {
+        best = score;
+        localStorage.setItem('cz-bullrun-best', String(best));
+        document.getElementById('best-label').textContent = best;
+      }
+    }
+
+    function handleInput() {
+      if (state === 'ready') {
+        resetGame();
+        state = 'playing';
+        player.vy = JUMP_V;
+      } else if (state === 'playing') {
+        player.vy = JUMP_V;
+      } else if (state === 'gameover') {
+        if (gameOverCooldown <= 0) {
+          resetGame();
+          state = 'playing';
+          player.vy = JUMP_V;
+        }
+      }
+    }
+
+    canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); handleInput(); });
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        handleInput();
+      }
+    });
+
+    // ================= update =================
+    function update(dt) {
+      if (shakeTimer > 0) shakeTimer -= dt;
+
+      if (state === 'ready') {
+        idleT += dt;
+        player.y = LOGICAL_H / 2 + Math.sin(idleT * 2) * 16;
+        trail.forEach((p, i) => { p.y = LOGICAL_H / 2 + Math.sin(idleT * 2 - i * 0.15) * 16; });
+      }
+
+      if (state === 'playing') {
+        const d = difficulty(score);
+        let scroll = d.scroll;
+        let gravity = GRAVITY;
+        if (volatilityActive) {
+          volatilityTimer -= dt;
+          gravity *= 1.9;
+          scroll *= 1.35;
+          if (volatilityTimer <= 0) volatilityActive = false;
+        }
+
+        player.vy += gravity * dt;
+        player.y += player.vy * dt;
+
+        if (player.y - PLAYER_R < 0) { player.y = PLAYER_R; player.vy = 0; }
+        if (player.y + PLAYER_R > LOGICAL_H) { player.y = LOGICAL_H - PLAYER_R; triggerGameOver(); }
+
+        spawnTimer -= dt;
+        if (spawnTimer <= 0) { spawnObstacle(); spawnTimer = d.spawn; }
+
+        obstacles.forEach((o) => { o.x -= scroll * dt; });
+        obstacles = obstacles.filter((o) => o.x + CANDLE_W > -20);
+
+        obstacles.forEach((o) => {
+          if (!o.passed && o.x + CANDLE_W / 2 < PLAYER_X) {
+            o.passed = true;
+            score++;
+            if (o.volatile) triggerVolatility();
+          }
+          const overlapsX = PLAYER_X + PLAYER_R > o.x - CANDLE_W / 2 && PLAYER_X - PLAYER_R < o.x + CANDLE_W / 2;
+          if (overlapsX) {
+            if (player.y - PLAYER_R < o.gapY || player.y + PLAYER_R > o.gapY + o.gapH) {
+              triggerGameOver();
+            }
+          }
+        });
+
+        trail.forEach((p) => { p.x -= scroll * dt; });
+        trail = trail.filter((p) => p.x > -20);
+        trail.push({ x: PLAYER_X, y: player.y });
+      }
+
+      if (state === 'gameover') {
+        if (gameOverCooldown > 0) gameOverCooldown -= dt;
+      }
+
+      particles.forEach((p) => {
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        p.vy += 500 * dt;
+        p.life -= dt;
+      });
+      particles = particles.filter((p) => p.life > 0);
+
+      toasts.forEach((t) => { t.life -= dt; t.y -= 24 * dt; });
+      toasts = toasts.filter((t) => t.life > 0);
+    }
+
+    // ================= render =================
+    function drawGrid() {
+      ctx.strokeStyle = 'rgba(169,168,159,0.10)';
+      ctx.lineWidth = 1;
+      for (let gx = 0; gx < LOGICAL_W; gx += 48) {
+        ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, LOGICAL_H); ctx.stroke();
+      }
+      for (let gy = 0; gy < LOGICAL_H; gy += 48) {
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(LOGICAL_W, gy); ctx.stroke();
+      }
+    }
+
+    function drawCandle(o) {
+      const halfW = CANDLE_W / 2;
+      ctx.fillStyle = o.color;
+      ctx.fillRect(o.x - halfW, 0, CANDLE_W, o.gapY);
+      ctx.fillRect(o.x - halfW, o.gapY + o.gapH, CANDLE_W, LOGICAL_H - (o.gapY + o.gapH));
+
+      // wick
+      ctx.strokeStyle = o.color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(o.x, Math.max(0, o.gapY - 22));
+      ctx.lineTo(o.x, o.gapY);
+      ctx.moveTo(o.x, o.gapY + o.gapH);
+      ctx.lineTo(o.x, Math.min(LOGICAL_H, o.gapY + o.gapH + 22));
+      ctx.stroke();
+
+      if (o.volatile) {
+        ctx.save();
+        ctx.setLineDash([8, 6]);
+        ctx.lineDashOffset = -performance.now() / 40;
+        ctx.strokeStyle = 'rgba(243,186,47,0.9)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(o.x - halfW - 3, -4, CANDLE_W + 6, o.gapY + 8);
+        ctx.strokeRect(o.x - halfW - 3, o.gapY + o.gapH - 4, CANDLE_W + 6, LOGICAL_H - (o.gapY + o.gapH) + 8);
+        ctx.restore();
+      }
+    }
+
+    function drawTrail() {
+      if (trail.length < 2) return;
+
+      ctx.beginPath();
+      trail.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+      ctx.lineTo(PLAYER_X, LOGICAL_H + 20);
+      ctx.lineTo(trail[0].x, LOGICAL_H + 20);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, 0, 0, LOGICAL_H);
+      grad.addColorStop(0, 'rgba(243,186,47,0.28)');
+      grad.addColorStop(1, 'rgba(243,186,47,0)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      ctx.beginPath();
+      trail.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+      ctx.strokeStyle = '#f3ba2f';
+      ctx.lineWidth = 3.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.shadowColor = '#f3ba2f';
+      ctx.shadowBlur = 14;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.beginPath();
+      ctx.arc(PLAYER_X, player.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#fbfbf3';
+      ctx.shadowColor = '#f3ba2f';
+      ctx.shadowBlur = 18;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    function drawParticles() {
+      particles.forEach((p) => {
+        ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function drawToasts() {
+      toasts.forEach((t) => {
+        ctx.globalAlpha = Math.max(0, t.life / t.maxLife);
+        ctx.font = "20px 'Permanent Marker', cursive";
+        ctx.fillStyle = '#ff6b5e';
+        ctx.textAlign = 'center';
+        ctx.fillText(t.text, Math.min(Math.max(t.x, 90), LOGICAL_W - 20), t.y);
+        ctx.globalAlpha = 1;
+      });
+    }
+
+    function drawHUD() {
+      if (state === 'playing') {
+        ctx.font = "48px 'Permanent Marker', cursive";
+        ctx.fillStyle = 'rgba(251,251,243,0.92)';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 6;
+        ctx.fillText(String(score), LOGICAL_W / 2, 76);
+        ctx.shadowBlur = 0;
+
+        if (volatilityActive) {
+          ctx.fillStyle = 'rgba(193,68,60,' + (0.10 + 0.06 * Math.sin(performance.now() / 60)) + ')';
+          ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+        }
+      }
+
+      if (state === 'ready') {
+        ctx.textAlign = 'center';
+        ctx.font = "38px 'Permanent Marker', cursive";
+        ctx.fillStyle = '#f3ba2f';
+        ctx.save();
+        ctx.translate(LOGICAL_W / 2, LOGICAL_H * 0.32);
+        ctx.rotate(-0.03);
+        ctx.fillText('BULL RUN', 0, 0);
+        ctx.restore();
+
+        ctx.font = "22px 'VT323', monospace";
+        ctx.fillStyle = 'rgba(251,251,243,0.85)';
+        const bob = Math.sin(idleT * 3) * 4;
+        ctx.fillText('TAP / CLICK / SPACE', LOGICAL_W / 2, LOGICAL_H * 0.62 + bob);
+        ctx.fillText('TO PUMP', LOGICAL_W / 2, LOGICAL_H * 0.62 + 26 + bob);
+      }
+
+      if (state === 'gameover') {
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+
+        ctx.textAlign = 'center';
+        ctx.font = "40px 'Permanent Marker', cursive";
+        ctx.fillStyle = '#ff6b5e';
+        ctx.fillText('REKT', LOGICAL_W / 2, LOGICAL_H * 0.36);
+
+        ctx.font = "30px 'VT323', monospace";
+        ctx.fillStyle = '#fbfbf3';
+        ctx.fillText('SCORE  ' + score, LOGICAL_W / 2, LOGICAL_H * 0.36 + 46);
+        ctx.fillStyle = '#f3ba2f';
+        ctx.fillText('BEST  ' + best, LOGICAL_W / 2, LOGICAL_H * 0.36 + 76);
+
+        if (gameOverCooldown <= 0) {
+          ctx.font = "20px 'VT323', monospace";
+          ctx.fillStyle = 'rgba(251,251,243,0.8)';
+          const bob = Math.sin(performance.now() / 220) * 3;
+          ctx.fillText('TAP TO RETRY', LOGICAL_W / 2, LOGICAL_H * 0.36 + 120 + bob);
+        }
+      }
+    }
+
+    function render() {
+      ctx.save();
+      if (shakeTimer > 0) {
+        const mag = 6 * (shakeTimer / 0.35);
+        ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
+      }
+
+      ctx.fillStyle = '#050505';
+      ctx.fillRect(-20, -20, LOGICAL_W + 40, LOGICAL_H + 40);
+      drawGrid();
+
+      obstacles.forEach(drawCandle);
+      drawTrail();
+      drawParticles();
+      drawToasts();
+      drawHUD();
+
+      ctx.restore();
+    }
+
+    // ================= loop =================
+    function loop(t) {
+      if (lastTime == null) lastTime = t;
+      let dt = (t - lastTime) / 1000;
+      lastTime = t;
+      dt = Math.min(dt, 0.033);
+
+      update(dt);
+      render();
+
+      requestAnimationFrame(loop);
+    }
+
+    fitCanvas();
+    resetGame();
+    requestAnimationFrame(loop);
+
+    const vid = document.getElementById('bgvideo');
+    vid.play().catch(() => {});
+  </script>
+</body>
+</html>
